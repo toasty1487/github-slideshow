@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macro Kitchen — Recipe Finder</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #1a1d24;
+    --card-2: #22262f;
+    --line: #2e333d;
+    --text: #e8eaed;
+    --muted: #9aa0aa;
+    --accent: #4ade80;
+    --accent-2: #38bdf8;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header {
+    padding: 32px 20px 20px;
+    text-align: center;
+    background: radial-gradient(1200px 300px at 50% -50px, rgba(74,222,128,0.12), transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 { margin: 0 0 6px; font-size: 1.9rem; letter-spacing: -0.02em; }
+  header p { margin: 0; color: var(--muted); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  .controls { display: grid; gap: 22px; margin-bottom: 28px; }
+  .group-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
+  .options { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip {
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chip:hover { border-color: var(--accent-2); }
+  .chip .emoji { font-size: 1.05rem; }
+  .chip.active { background: var(--accent); color: #05210f; border-color: var(--accent); font-weight: 600; }
+  .chip.active.blue { background: var(--accent-2); color: #04202b; border-color: var(--accent-2); }
+
+  .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; color: var(--muted); font-size: 0.9rem; }
+  .clear { background: none; border: none; color: var(--accent-2); cursor: pointer; font-size: 0.9rem; }
+  .clear:hover { text-decoration: underline; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-top { padding: 18px 18px 0; }
+  .card h3 { margin: 0 0 4px; font-size: 1.15rem; }
+  .card .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 14px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tag { font-size: 0.72rem; padding: 3px 9px; border-radius: 999px; background: var(--card-2); color: var(--muted); border: 1px solid var(--line); }
+  .tag.diet { color: var(--accent); border-color: rgba(74,222,128,0.35); }
+  .tag.macro { color: var(--accent-2); border-color: rgba(56,189,248,0.35); }
+
+  .macros { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; padding: 0 18px 14px; }
+  .macro-box { background: var(--card-2); border-radius: 10px; padding: 8px; text-align: center; }
+  .macro-box .val { font-weight: 700; font-size: 1.05rem; }
+  .macro-box .lbl { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .bar { height: 5px; border-radius: 3px; margin-top: 6px; background: var(--line); overflow: hidden; }
+  .bar > span { display: block; height: 100%; }
+  .bar.p > span { background: #f87171; }
+  .bar.f > span { background: #fbbf24; }
+  .bar.c > span { background: #60a5fa; }
+
+  .card-foot { margin-top: auto; border-top: 1px solid var(--line); }
+  details summary { cursor: pointer; padding: 14px 18px; color: var(--accent-2); font-size: 0.9rem; list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  details[open] summary { color: var(--text); }
+  .recipe-body { padding: 0 18px 18px; font-size: 0.9rem; }
+  .recipe-body h4 { margin: 12px 0 6px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .recipe-body ul, .recipe-body ol { margin: 0; padding-left: 20px; }
+  .recipe-body li { margin-bottom: 4px; }
+  .kcal { font-size: 0.82rem; color: var(--muted); }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  footer { text-align: center; padding: 30px 20px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🍳 Macro Kitchen</h1>
+  <p>Pick your goal and your diet — we'll find the meal.</p>
+</header>
+
+<div class="wrap">
+  <div class="controls">
+    <div>
+      <div class="group-label">1 · Macro focus</div>
+      <div class="options" id="macroOpts">
+        <button class="chip blue" data-macro="protein"><span class="emoji">💪</span> More protein</button>
+        <button class="chip blue" data-macro="fat"><span class="emoji">🥑</span> More fat</button>
+        <button class="chip blue" data-macro="carb"><span class="emoji">🍚</span> More carbs</button>
+      </div>
+    </div>
+    <div>
+      <div class="group-label">2 · Diet</div>
+      <div class="options" id="dietOpts">
+        <button class="chip" data-diet="vegan"><span class="emoji">🌱</span> Vegan</button>
+        <button class="chip" data-diet="vegetarian"><span class="emoji">🧀</span> Vegetarian</button>
+        <button class="chip" data-diet="meat"><span class="emoji">🍗</span> Meat</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="meta">
+    <span id="count"></span>
+    <button class="clear" id="clearBtn">Reset filters</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none">No recipes match yet — try loosening a filter.</div>
+</div>
+
+<footer>Macro Kitchen · a simple recipe finder · nutrition values are approximate per serving</footer>
+
+<script>
+// ---- Recipe data -------------------------------------------------------
+// diet: vegan recipes also count as vegetarian. macro = the dominant focus.
+const RECIPES = [
+  {
+    name: "Grilled Lemon Herb Chicken", diet: "meat", macro: "protein",
+    serves: 2, time: "25 min", kcal: 410, p: 46, f: 18, c: 9,
+    ingredients: ["2 chicken breasts","2 tbsp olive oil","1 lemon (juice + zest)","2 cloves garlic, minced","1 tsp dried oregano","Salt & pepper"],
+    steps: ["Whisk oil, lemon, garlic, oregano, salt and pepper.","Coat chicken and marinate 10 min.","Grill 5–6 min per side until 74°C internal.","Rest 3 min, slice and serve."]
+  },
+  {
+    name: "Seared Salmon & Greens", diet: "meat", macro: "protein",
+    serves: 2, time: "20 min", kcal: 440, p: 40, f: 26, c: 6,
+    ingredients: ["2 salmon fillets","1 tbsp olive oil","Handful spinach","1 tbsp butter","1/2 lemon","Salt & pepper"],
+    steps: ["Pat salmon dry, season well.","Sear skin-side down 4 min, flip 3 min.","Wilt spinach in the pan with butter.","Squeeze lemon over and serve."]
+  },
+  {
+    name: "Beef & Broccoli Stir-Fry", diet: "meat", macro: "protein",
+    serves: 3, time: "25 min", kcal: 390, p: 38, f: 15, c: 22,
+    ingredients: ["400g lean beef strips","2 cups broccoli florets","3 tbsp soy sauce","1 tbsp cornstarch","1 tbsp ginger, grated","2 cloves garlic","1 tsp sesame oil"],
+    steps: ["Toss beef with cornstarch and 1 tbsp soy.","Sear beef hot and fast, remove.","Stir-fry broccoli, garlic, ginger 3 min.","Return beef, add remaining soy + sesame oil, toss."]
+  },
+  {
+    name: "Turkey Egg-White Scramble", diet: "meat", macro: "protein",
+    serves: 1, time: "12 min", kcal: 300, p: 42, f: 10, c: 6,
+    ingredients: ["100g ground turkey","5 egg whites","1/4 onion, diced","Handful cherry tomatoes","Salt, pepper, paprika"],
+    steps: ["Brown turkey with onion and paprika.","Add tomatoes, cook 2 min.","Pour in egg whites, scramble gently until set.","Season and serve."]
+  },
+  {
+    name: "Avocado Bacon Egg Bowl", diet: "meat", macro: "fat",
+    serves: 1, time: "15 min", kcal: 560, p: 24, f: 46, c: 10,
+    ingredients: ["1 avocado","3 rashers bacon","2 eggs","1 tsp olive oil","Chili flakes","Salt & pepper"],
+    steps: ["Crisp bacon in a pan, set aside.","Fry eggs in the bacon fat.","Slice avocado into a bowl.","Top with eggs, crumbled bacon, chili flakes."]
+  },
+  {
+    name: "Ribeye with Herb Butter", diet: "meat", macro: "fat",
+    serves: 2, time: "20 min", kcal: 620, p: 40, f: 50, c: 2,
+    ingredients: ["2 ribeye steaks","2 tbsp butter","2 sprigs thyme","2 cloves garlic","Salt & pepper"],
+    steps: ["Season steaks generously, rest to room temp.","Sear 3–4 min per side in a hot pan.","Add butter, thyme, garlic; baste 1 min.","Rest 5 min before slicing."]
+  },
+  {
+    name: "Loaded Sweet Potato & Chicken", diet: "meat", macro: "carb",
+    serves: 2, time: "45 min", kcal: 480, p: 32, f: 12, c: 58,
+    ingredients: ["2 large sweet potatoes","1 cooked chicken breast, shredded","1/4 cup corn","2 tbsp Greek yogurt","Chives","Salt & pepper"],
+    steps: ["Bake sweet potatoes at 200°C for 40 min.","Split open and fluff.","Top with chicken, corn, yogurt.","Finish with chives and pepper."]
+  },
+  {
+    name: "Chicken Teriyaki Rice Bowl", diet: "meat", macro: "carb",
+    serves: 2, time: "30 min", kcal: 520, p: 34, f: 10, c: 70,
+    ingredients: ["2 cups cooked rice","2 chicken thighs, diced","3 tbsp teriyaki sauce","1 carrot, julienned","2 spring onions","Sesame seeds"],
+    steps: ["Pan-fry chicken until golden.","Add teriyaki, glaze 2 min.","Serve over rice with carrot.","Top with spring onion and sesame."]
+  },
+  {
+    name: "Greek Yogurt Protein Bowl", diet: "vegetarian", macro: "protein",
+    serves: 1, time: "5 min", kcal: 330, p: 34, f: 8, c: 30,
+    ingredients: ["250g Greek yogurt (0%)","1 scoop whey (optional)","1/2 cup berries","1 tbsp honey","2 tbsp granola"],
+    steps: ["Stir whey into yogurt until smooth.","Top with berries and granola.","Drizzle honey and serve."]
+  },
+  {
+    name: "Cottage Cheese & Egg Toast", diet: "vegetarian", macro: "protein",
+    serves: 1, time: "10 min", kcal: 360, p: 32, f: 12, c: 30,
+    ingredients: ["150g cottage cheese","2 eggs","2 slices wholegrain bread","Chili flakes","Salt & pepper"],
+    steps: ["Boil or poach eggs to your liking.","Toast bread, spread cottage cheese.","Top with eggs, season, add chili flakes."]
+  },
+  {
+    name: "Halloumi & Chickpea Salad", diet: "vegetarian", macro: "protein",
+    serves: 2, time: "20 min", kcal: 430, p: 28, f: 24, c: 26,
+    ingredients: ["200g halloumi, sliced","1 can chickpeas, drained","Cucumber, diced","Cherry tomatoes","2 tbsp olive oil","1 tbsp lemon juice"],
+    steps: ["Pan-fry halloumi until golden both sides.","Toss chickpeas, cucumber, tomatoes with oil + lemon.","Top salad with halloumi and serve."]
+  },
+  {
+    name: "Cheesy Spinach Frittata", diet: "vegetarian", macro: "fat",
+    serves: 3, time: "30 min", kcal: 380, p: 22, f: 29, c: 6,
+    ingredients: ["6 eggs","1 cup grated cheddar","2 cups spinach","1/4 cup cream","1 tbsp butter","Salt & pepper"],
+    steps: ["Whisk eggs with cream, salt, pepper.","Wilt spinach in buttered oven-safe pan.","Pour eggs over, scatter cheese.","Bake at 180°C for 18 min until set."]
+  },
+  {
+    name: "Caprese Avocado Stack", diet: "vegetarian", macro: "fat",
+    serves: 2, time: "10 min", kcal: 470, p: 18, f: 38, c: 12,
+    ingredients: ["1 avocado","150g fresh mozzarella","2 tomatoes","Fresh basil","2 tbsp olive oil","Balsamic glaze"],
+    steps: ["Slice avocado, mozzarella and tomato.","Layer alternately with basil.","Drizzle olive oil and balsamic.","Season and serve."]
+  },
+  {
+    name: "Mushroom Cream Pasta", diet: "vegetarian", macro: "carb",
+    serves: 2, time: "25 min", kcal: 560, p: 16, f: 20, c: 78,
+    ingredients: ["200g pasta","2 cups mushrooms, sliced","1/2 cup cream","2 cloves garlic","1/4 cup parmesan","Parsley"],
+    steps: ["Cook pasta al dente, reserve some water.","Sauté mushrooms and garlic.","Add cream and parmesan, loosen with pasta water.","Toss pasta through, finish with parsley."]
+  },
+  {
+    name: "Margherita Flatbread", diet: "vegetarian", macro: "carb",
+    serves: 2, time: "20 min", kcal: 490, p: 18, f: 16, c: 68,
+    ingredients: ["2 flatbreads","1/2 cup passata","150g mozzarella","Fresh basil","1 tbsp olive oil"],
+    steps: ["Spread passata over flatbreads.","Add torn mozzarella.","Bake at 220°C for 10 min.","Top with basil and a drizzle of oil."]
+  },
+  {
+    name: "Tofu Scramble & Beans", diet: "vegan", macro: "protein",
+    serves: 2, time: "20 min", kcal: 340, p: 26, f: 14, c: 28,
+    ingredients: ["300g firm tofu, crumbled","1/2 tsp turmeric","1 can black beans","1/4 onion","1 tbsp nutritional yeast","Salt & pepper"],
+    steps: ["Sauté onion, add crumbled tofu and turmeric.","Stir in nutritional yeast, cook 5 min.","Warm beans through.","Season and serve."]
+  },
+  {
+    name: "Edamame Lentil Power Bowl", diet: "vegan", macro: "protein",
+    serves: 2, time: "25 min", kcal: 400, p: 28, f: 12, c: 46,
+    ingredients: ["1 cup cooked lentils","1 cup edamame","1 cup quinoa, cooked","1 carrot, grated","2 tbsp tahini","1 tbsp lemon juice"],
+    steps: ["Combine lentils, edamame, quinoa, carrot.","Whisk tahini with lemon and a splash of water.","Drizzle dressing over the bowl and toss."]
+  },
+  {
+    name: "Tempeh Peanut Stir-Fry", diet: "vegan", macro: "protein",
+    serves: 2, time: "25 min", kcal: 430, p: 27, f: 22, c: 30,
+    ingredients: ["200g tempeh, cubed","2 tbsp peanut butter","2 tbsp soy sauce","1 cup broccoli","1 red pepper","1 tsp ginger"],
+    steps: ["Pan-fry tempeh until browned.","Add veg and ginger, stir-fry 4 min.","Mix peanut butter + soy with water, pour in.","Toss to coat and serve."]
+  },
+  {
+    name: "Avocado Walnut Kale Salad", diet: "vegan", macro: "fat",
+    serves: 2, time: "15 min", kcal: 450, p: 12, f: 38, c: 22,
+    ingredients: ["1 avocado","1/2 cup walnuts","4 cups kale","2 tbsp olive oil","1 tbsp lemon juice","Salt"],
+    steps: ["Massage kale with oil, lemon and salt.","Slice avocado on top.","Scatter toasted walnuts and serve."]
+  },
+  {
+    name: "Coconut Chickpea Curry", diet: "vegan", macro: "fat",
+    serves: 3, time: "30 min", kcal: 480, p: 14, f: 30, c: 40,
+    ingredients: ["1 can chickpeas","1 can coconut milk","2 tbsp curry paste","1 onion","2 cups spinach","1 tbsp oil"],
+    steps: ["Sauté onion, stir in curry paste.","Add coconut milk and chickpeas, simmer 15 min.","Fold in spinach until wilted.","Serve with rice or naan."]
+  },
+  {
+    name: "Sweet Potato Black Bean Chili", diet: "vegan", macro: "carb",
+    serves: 4, time: "40 min", kcal: 420, p: 15, f: 8, c: 74,
+    ingredients: ["2 sweet potatoes, cubed","1 can black beans","1 can chopped tomatoes","1 onion","2 tbsp chili powder","1 cup corn"],
+    steps: ["Sauté onion, add chili powder.","Add sweet potato, tomatoes and 1 cup water.","Simmer 20 min until tender.","Stir in beans and corn, heat through."]
+  },
+  {
+    name: "Teriyaki Veg Noodles", diet: "vegan", macro: "carb",
+    serves: 2, time: "20 min", kcal: 500, p: 14, f: 10, c: 86,
+    ingredients: ["200g noodles","3 tbsp teriyaki sauce","1 cup mixed veg","2 spring onions","1 tsp sesame oil","Sesame seeds"],
+    steps: ["Cook noodles, drain.","Stir-fry mixed veg 3 min.","Add noodles + teriyaki, toss.","Finish with sesame oil, seeds, spring onion."]
+  }
+];
+
+// ---- State + rendering -------------------------------------------------
+let macro = null;   // 'protein' | 'fat' | 'carb'
+let diet  = null;   // 'vegan' | 'vegetarian' | 'meat'
+
+const grid = document.getElementById('grid');
+const empty = document.getElementById('empty');
+const countEl = document.getElementById('count');
+
+function dietMatch(r) {
+  if (!diet) return true;
+  if (diet === 'vegetarian') return r.diet === 'vegetarian' || r.diet === 'vegan';
+  return r.diet === diet;
+}
+
+function macroPercents(r) {
+  const pc = r.p * 4, fc = r.f * 9, cc = r.c * 4;
+  const total = pc + fc + cc || 1;
+  return { p: Math.round(pc/total*100), f: Math.round(fc/total*100), c: Math.round(cc/total*100) };
+}
+
+function render() {
+  const list = RECIPES.filter(r => (!macro || r.macro === macro) && dietMatch(r));
+  grid.innerHTML = '';
+  empty.style.display = list.length ? 'none' : 'block';
+  countEl.textContent = list.length + (list.length === 1 ? ' recipe' : ' recipes');
+
+  const macroLabel = { protein: 'High protein', fat: 'High fat', carb: 'High carb' };
+  const dietLabel = { vegan: 'Vegan', vegetarian: 'Vegetarian', meat: 'Meat' };
+
+  for (const r of list) {
+    const pct = macroPercents(r);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-top">
+        <h3>${r.name}</h3>
+        <div class="sub">Serves ${r.serves} · ${r.time} · <span class="kcal">${r.kcal} kcal</span></div>
+        <div class="tags">
+          <span class="tag diet">${dietLabel[r.diet]}</span>
+          <span class="tag macro">${macroLabel[r.macro]}</span>
+        </div>
+      </div>
+      <div class="macros">
+        <div class="macro-box"><div class="val">${r.p}g</div><div class="lbl">Protein</div><div class="bar p"><span style="width:${pct.p}%"></span></div></div>
+        <div class="macro-box"><div class="val">${r.f}g</div><div class="lbl">Fat</div><div class="bar f"><span style="width:${pct.f}%"></span></div></div>
+        <div class="macro-box"><div class="val">${r.c}g</div><div class="lbl">Carbs</div><div class="bar c"><span style="width:${pct.c}%"></span></div></div>
+      </div>
+      <div class="card-foot">
+        <details>
+          <summary>View recipe →</summary>
+          <div class="recipe-body">
+            <h4>Ingredients</h4>
+            <ul>${r.ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
+            <h4>Method</h4>
+            <ol>${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+          </div>
+        </details>
+      </div>`;
+    grid.appendChild(card);
+  }
+}
+
+document.getElementById('macroOpts').addEventListener('click', e => {
+  const btn = e.target.closest('[data-macro]'); if (!btn) return;
+  macro = macro === btn.dataset.macro ? null : btn.dataset.macro;
+  document.querySelectorAll('[data-macro]').forEach(b => b.classList.toggle('active', b.dataset.macro === macro));
+  render();
+});
+document.getElementById('dietOpts').addEventListener('click', e => {
+  const btn = e.target.closest('[data-diet]'); if (!btn) return;
+  diet = diet === btn.dataset.diet ? null : btn.dataset.diet;
+  document.querySelectorAll('[data-diet]').forEach(b => b.classList.toggle('active', b.dataset.diet === diet));
+  render();
+});
+document.getElementById('clearBtn').addEventListener('click', () => {
+  macro = null; diet = null;
+  document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
