@@ -98,6 +98,80 @@
 
   .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
   footer { text-align: center; padding: 30px 20px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); }
+
+  /* Add-to-list button on cards */
+  .add-btn {
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--line);
+    background: var(--card-2);
+    color: var(--accent);
+    padding: 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.15s ease;
+  }
+  .add-btn:hover { background: #2b303a; }
+  .add-btn.added { background: rgba(74,222,128,0.14); color: var(--accent); }
+
+  /* Floating cart button */
+  .cart-fab {
+    position: fixed; right: 20px; bottom: 20px; z-index: 30;
+    background: var(--accent); color: #05210f; border: none;
+    padding: 14px 20px; border-radius: 999px; cursor: pointer;
+    font-size: 0.95rem; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .cart-fab .badge {
+    background: #05210f; color: var(--accent); border-radius: 999px;
+    min-width: 22px; height: 22px; padding: 0 6px; font-size: 0.8rem;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  /* Drawer */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 40;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100%; width: min(420px, 92vw);
+    background: var(--bg); border-left: 1px solid var(--line); z-index: 50;
+    transform: translateX(100%); transition: transform 0.25s ease;
+    display: flex; flex-direction: column;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head { padding: 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+  .drawer-head h2 { margin: 0; font-size: 1.2rem; }
+  .drawer-close { background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; }
+  .drawer-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+  .drawer-foot { padding: 16px 20px; border-top: 1px solid var(--line); display: flex; gap: 10px; }
+  .btn {
+    flex: 1; padding: 11px; border-radius: 10px; cursor: pointer; font-size: 0.9rem;
+    font-weight: 600; border: 1px solid var(--line); background: var(--card); color: var(--text);
+  }
+  .btn:hover { border-color: var(--accent-2); }
+  .btn.primary { background: var(--accent); color: #05210f; border-color: var(--accent); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .sel-recipes { margin-bottom: 18px; }
+  .sel-recipe { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .sel-recipe button { background: none; border: none; color: #f87171; cursor: pointer; font-size: 0.8rem; }
+  .ing-line { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 0.92rem; }
+  .ing-line input { width: 17px; height: 17px; accent-color: var(--accent); }
+  .ing-line label { cursor: pointer; }
+  .ing-line.checked label { text-decoration: line-through; color: var(--muted); }
+  .ing-count { color: var(--accent-2); font-size: 0.8rem; margin-left: 4px; }
+  .drawer-empty { color: var(--muted); text-align: center; padding: 40px 10px; }
+  .section-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 4px 0 6px; }
+  .copied-toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: var(--card-2); color: var(--text); border: 1px solid var(--line);
+    padding: 10px 18px; border-radius: 999px; z-index: 60; font-size: 0.9rem;
+    opacity: 0; transition: opacity 0.2s ease; pointer-events: none;
+  }
+  .copied-toast.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -136,6 +210,22 @@
 </div>
 
 <footer>Macro Kitchen · a simple recipe finder · nutrition values are approximate per serving</footer>
+
+<button class="cart-fab" id="cartFab">🛒 Grocery list <span class="badge" id="cartBadge">0</span></button>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-label="Grocery list">
+  <div class="drawer-head">
+    <h2>🛒 Grocery list</h2>
+    <button class="drawer-close" id="drawerClose" aria-label="Close">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot">
+    <button class="btn" id="copyBtn">Copy list</button>
+    <button class="btn primary" id="clearListBtn">Clear all</button>
+  </div>
+</aside>
+<div class="copied-toast" id="toast">Copied to clipboard ✓</div>
 
 <script>
 // ---- Recipe data -------------------------------------------------------
@@ -278,6 +368,8 @@ const RECIPES = [
 // ---- State + rendering -------------------------------------------------
 let macro = null;   // 'protein' | 'fat' | 'carb'
 let diet  = null;   // 'vegan' | 'vegetarian' | 'meat'
+const selected = new Set();   // recipe indices added to the grocery list
+const checkedItems = new Set(); // ticked-off ingredient keys
 
 const grid = document.getElementById('grid');
 const empty = document.getElementById('empty');
@@ -306,6 +398,8 @@ function render() {
 
   for (const r of list) {
     const pct = macroPercents(r);
+    const id = RECIPES.indexOf(r);
+    const inList = selected.has(id);
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
@@ -332,10 +426,124 @@ function render() {
             <ol>${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
           </div>
         </details>
+        <button class="add-btn ${inList ? 'added' : ''}" data-add="${id}">
+          ${inList ? '✓ Added to list' : '+ Add to grocery list'}
+        </button>
       </div>`;
     grid.appendChild(card);
   }
 }
+
+// ---- Grocery list ------------------------------------------------------
+const drawer = document.getElementById('drawer');
+const overlay = document.getElementById('overlay');
+const drawerBody = document.getElementById('drawerBody');
+const cartBadge = document.getElementById('cartBadge');
+const copyBtn = document.getElementById('copyBtn');
+const clearListBtn = document.getElementById('clearListBtn');
+
+function updateBadge() { cartBadge.textContent = selected.size; }
+
+// Combine ingredients across selected recipes, counting repeats.
+function aggregateIngredients() {
+  const map = new Map(); // key -> { label, count }
+  for (const id of selected) {
+    for (const ing of RECIPES[id].ingredients) {
+      const key = ing.trim().toLowerCase();
+      if (map.has(key)) map.get(key).count++;
+      else map.set(key, { label: ing.trim(), count: 1 });
+    }
+  }
+  return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function renderGrocery() {
+  updateBadge();
+  const ids = [...selected];
+
+  if (ids.length === 0) {
+    drawerBody.innerHTML = '<div class="drawer-empty">Your grocery list is empty.<br>Add recipes to build a shopping list.</div>';
+    copyBtn.disabled = true; clearListBtn.disabled = true;
+    return;
+  }
+  copyBtn.disabled = false; clearListBtn.disabled = false;
+
+  const recipesHtml = ids.map(id =>
+    `<div class="sel-recipe"><span>${RECIPES[id].name}</span><button data-remove="${id}">Remove</button></div>`
+  ).join('');
+
+  const items = aggregateIngredients();
+  const itemsHtml = items.map(it => {
+    const key = it.label.toLowerCase();
+    const isChecked = checkedItems.has(key);
+    const countBadge = it.count > 1 ? `<span class="ing-count">×${it.count}</span>` : '';
+    return `<div class="ing-line ${isChecked ? 'checked' : ''}">
+      <input type="checkbox" data-check="${key.replace(/"/g, '&quot;')}" ${isChecked ? 'checked' : ''}>
+      <label>${it.label}${countBadge}</label>
+    </div>`;
+  }).join('');
+
+  drawerBody.innerHTML = `
+    <div class="sel-recipes">
+      <div class="section-label">${ids.length} recipe${ids.length > 1 ? 's' : ''}</div>
+      ${recipesHtml}
+    </div>
+    <div class="section-label">${items.length} item${items.length > 1 ? 's' : ''} to buy</div>
+    ${itemsHtml}`;
+}
+
+function toggleSelect(id) {
+  if (selected.has(id)) selected.delete(id);
+  else selected.add(id);
+  render();          // refresh card button states
+  renderGrocery();
+}
+
+function openDrawer() { drawer.classList.add('open'); overlay.classList.add('open'); renderGrocery(); }
+function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('open'); }
+
+document.getElementById('cartFab').addEventListener('click', openDrawer);
+document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+overlay.addEventListener('click', closeDrawer);
+
+// Add / remove via card buttons
+grid.addEventListener('click', e => {
+  const btn = e.target.closest('[data-add]'); if (!btn) return;
+  toggleSelect(Number(btn.dataset.add));
+});
+
+// Interactions inside the drawer (remove recipe, tick items)
+drawerBody.addEventListener('click', e => {
+  const rm = e.target.closest('[data-remove]');
+  if (rm) { toggleSelect(Number(rm.dataset.remove)); return; }
+});
+drawerBody.addEventListener('change', e => {
+  const cb = e.target.closest('[data-check]'); if (!cb) return;
+  const key = cb.dataset.check;
+  if (cb.checked) checkedItems.add(key); else checkedItems.delete(key);
+  cb.closest('.ing-line').classList.toggle('checked', cb.checked);
+});
+
+clearListBtn.addEventListener('click', () => {
+  selected.clear(); checkedItems.clear();
+  render(); renderGrocery();
+});
+
+copyBtn.addEventListener('click', async () => {
+  const items = aggregateIngredients();
+  const text = 'Grocery list — Macro Kitchen\n\n' +
+    items.map(it => `- ${it.label}${it.count > 1 ? ` (×${it.count})` : ''}`).join('\n');
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (_) {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  }
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1600);
+});
 
 document.getElementById('macroOpts').addEventListener('click', e => {
   const btn = e.target.closest('[data-macro]'); if (!btn) return;

@@ -10,6 +10,9 @@ shows matching meals with ingredients, method, and per-serving nutrition.
 - Filters combine — every macro × diet combination has at least one recipe
 - Protein / fat / carb bars and calories per serving on every card
 - Expandable ingredients + step-by-step method
+- **Grocery list:** add any recipes to a shopping list — ingredients are combined
+  across recipes (shared items show a `×N` count), tick items off as you shop,
+  and copy the whole list to your clipboard
 - No build step, no dependencies, works offline
 
 ## Run it
