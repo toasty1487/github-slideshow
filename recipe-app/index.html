@@ -172,6 +172,66 @@
     opacity: 0; transition: opacity 0.2s ease; pointer-events: none;
   }
   .copied-toast.show { opacity: 1; }
+
+  /* "Cook from ingredients" launcher */
+  .cook-launch {
+    width: 100%; margin-top: 4px; padding: 16px; border-radius: var(--radius);
+    border: 1px dashed var(--accent-2); background: rgba(56,189,248,0.06);
+    color: var(--text); cursor: pointer; font-size: 0.98rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s ease;
+  }
+  .cook-launch:hover { background: rgba(56,189,248,0.13); }
+  .cook-launch span.hint { font-weight: 400; color: var(--muted); }
+
+  /* Cook modal */
+  .modal {
+    position: fixed; inset: 0; z-index: 45; display: none;
+    background: rgba(0,0,0,0.6); padding: 20px; overflow-y: auto;
+  }
+  .modal.open { display: flex; align-items: flex-start; justify-content: center; }
+  .modal-card {
+    background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
+    width: min(920px, 100%); margin: auto; display: grid; grid-template-columns: 1fr 1fr;
+    max-height: calc(100vh - 40px); overflow: hidden;
+  }
+  @media (max-width: 720px) { .modal-card { grid-template-columns: 1fr; } }
+  .modal-col { display: flex; flex-direction: column; min-height: 0; }
+  .modal-col.pantry { border-right: 1px solid var(--line); }
+  @media (max-width: 720px) { .modal-col.pantry { border-right: none; border-bottom: 1px solid var(--line); max-height: 40vh; } }
+  .modal-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .modal-head h2 { margin: 0; font-size: 1.1rem; }
+  .modal-head p { margin: 2px 0 0; font-size: 0.82rem; color: var(--muted); }
+  .modal-close { background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; }
+  .modal-scroll { overflow-y: auto; padding: 14px 20px 20px; flex: 1; }
+
+  .search-box { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font-size: 0.9rem; margin-bottom: 12px; }
+  .search-box::placeholder { color: var(--muted); }
+  .pantry-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 0.9rem; }
+  .pantry-item input { width: 16px; height: 16px; accent-color: var(--accent-2); }
+  .pantry-item label { cursor: pointer; text-transform: capitalize; }
+  .pantry-actions { display: flex; gap: 10px; margin-bottom: 10px; }
+  .mini-btn { background: none; border: 1px solid var(--line); color: var(--accent-2); border-radius: 8px;
+    padding: 6px 10px; font-size: 0.8rem; cursor: pointer; }
+  .mini-btn:hover { border-color: var(--accent-2); }
+
+  .result { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: var(--card); }
+  .result.makeable { border-color: var(--accent); }
+  .result h4 { margin: 0 0 3px; font-size: 1rem; }
+  .result .match { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
+  .result .badge-make { color: var(--accent); font-weight: 600; }
+  .result .miss { color: #fbbf24; }
+  .have-bar { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; margin-bottom: 10px; }
+  .have-bar > span { display: block; height: 100%; background: var(--accent); }
+  .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .result-actions button { font-size: 0.8rem; padding: 6px 10px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card-2); color: var(--text); }
+  .result-actions button.go { background: var(--accent); color: #05210f; border-color: var(--accent); font-weight: 600; }
+  .result-detail { margin-top: 10px; font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 8px; display: none; }
+  .result-detail.open { display: block; }
+  .result-detail ul, .result-detail ol { margin: 4px 0; padding-left: 18px; }
+  .result-detail .missing-note { color: #fbbf24; }
 </style>
 </head>
 <body>
@@ -200,6 +260,10 @@
     </div>
   </div>
 
+  <button class="cook-launch" id="cookLaunch">
+    🧑‍🍳 What can I make? <span class="hint">— pick ingredients you have and build a meal</span>
+  </button>
+
   <div class="meta">
     <span id="count"></span>
     <button class="clear" id="clearBtn">Reset filters</button>
@@ -226,6 +290,36 @@
   </div>
 </aside>
 <div class="copied-toast" id="toast">Copied to clipboard ✓</div>
+
+<div class="modal" id="cookModal">
+  <div class="modal-card">
+    <div class="modal-col pantry">
+      <div class="modal-head">
+        <div>
+          <h2>🧺 Your ingredients</h2>
+          <p>Tick what you have at home</p>
+        </div>
+        <button class="modal-close" id="cookClose" aria-label="Close">×</button>
+      </div>
+      <div class="modal-scroll">
+        <input type="text" class="search-box" id="pantrySearch" placeholder="Search ingredients…">
+        <div class="pantry-actions">
+          <button class="mini-btn" id="pantryClear">Clear all</button>
+        </div>
+        <div id="pantryList"></div>
+      </div>
+    </div>
+    <div class="modal-col">
+      <div class="modal-head">
+        <div>
+          <h2>🍽️ Meals you can make</h2>
+          <p id="cookResultsSub">Pick some ingredients to see meals</p>
+        </div>
+      </div>
+      <div class="modal-scroll" id="cookResults"></div>
+    </div>
+  </div>
+</div>
 
 <script>
 // ---- Recipe data -------------------------------------------------------
@@ -370,6 +464,30 @@ let macro = null;   // 'protein' | 'fat' | 'carb'
 let diet  = null;   // 'vegan' | 'vegetarian' | 'meat'
 const selected = new Set();   // recipe indices added to the grocery list
 const checkedItems = new Set(); // ticked-off ingredient keys
+const pantry = new Set();      // core ingredient names the user has
+
+// ---- Persistence (localStorage) ---------------------------------------
+const STORE_KEY = 'macroKitchen.v1';
+function saveState() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      selected: [...selected],
+      checked: [...checkedItems],
+      pantry: [...pantry]
+    }));
+  } catch (_) { /* storage unavailable — app still works for the session */ }
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    (s.selected || []).forEach(id => { if (RECIPES[id]) selected.add(id); });
+    (s.checked || []).forEach(k => checkedItems.add(k));
+    (s.pantry || []).forEach(p => pantry.add(p));
+  } catch (_) { /* ignore corrupt data */ }
+}
+loadState();
 
 const grid = document.getElementById('grid');
 const empty = document.getElementById('empty');
@@ -495,6 +613,7 @@ function renderGrocery() {
 function toggleSelect(id) {
   if (selected.has(id)) selected.delete(id);
   else selected.add(id);
+  saveState();
   render();          // refresh card button states
   renderGrocery();
 }
@@ -522,10 +641,12 @@ drawerBody.addEventListener('change', e => {
   const key = cb.dataset.check;
   if (cb.checked) checkedItems.add(key); else checkedItems.delete(key);
   cb.closest('.ing-line').classList.toggle('checked', cb.checked);
+  saveState();
 });
 
 clearListBtn.addEventListener('click', () => {
   selected.clear(); checkedItems.clear();
+  saveState();
   render(); renderGrocery();
 });
 
@@ -543,6 +664,130 @@ copyBtn.addEventListener('click', async () => {
   const toast = document.getElementById('toast');
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 1600);
+});
+
+// ---- Cook from ingredients you have ------------------------------------
+// Reduce an ingredient line ("2 tbsp olive oil") to a core name ("olive oil").
+const PREP = new Set(['diced','minced','grated','sliced','shredded','drained','cubed',
+  'julienned','chopped','crumbled','halved','peeled','optional','to taste']);
+const UNITS = new Set(['tbsp','tsp','tablespoon','tablespoons','teaspoon','teaspoons',
+  'cup','cups','g','kg','ml','l','can','cans','clove','cloves','slice','slices','sprig',
+  'sprigs','rasher','rashers','scoop','scoops','handful','large','small','oz','pinch']);
+
+function coreIngredient(str) {
+  let s = str.toLowerCase().trim().replace(/\([^)]*\)/g, '').trim();
+  const parts = s.split(',').map(x => x.trim()).filter(Boolean);
+  while (parts.length > 1 && PREP.has(parts[parts.length - 1])) parts.pop();
+  s = parts.join(', ');
+  let tokens = s.split(/\s+/);
+  while (tokens.length) {
+    const raw = tokens[0];
+    if (/^[\d/¼½¾.\-–]+$/.test(raw)) { tokens.shift(); continue; }   // pure quantity
+    if (UNITS.has(raw.replace(/[^a-z%]/g, ''))) { tokens.shift(); continue; } // 250g, tbsp…
+    break;
+  }
+  return (tokens.join(' ').trim() || str.toLowerCase().trim());
+}
+
+// Build recipe -> core ingredient sets and the master pantry list.
+const RECIPE_CORES = RECIPES.map(r => [...new Set(r.ingredients.map(coreIngredient))]);
+const ALL_CORES = [...new Set(RECIPE_CORES.flat())].sort();
+
+const cookModal = document.getElementById('cookModal');
+const pantryList = document.getElementById('pantryList');
+const pantrySearch = document.getElementById('pantrySearch');
+const cookResults = document.getElementById('cookResults');
+const cookResultsSub = document.getElementById('cookResultsSub');
+
+function renderPantry() {
+  const q = pantrySearch.value.trim().toLowerCase();
+  const shown = ALL_CORES.filter(c => !q || c.includes(q));
+  pantryList.innerHTML = shown.map(c => {
+    const id = 'p_' + c.replace(/[^a-z0-9]/g, '_');
+    return `<div class="pantry-item">
+      <input type="checkbox" id="${id}" data-pantry="${c.replace(/"/g, '&quot;')}" ${pantry.has(c) ? 'checked' : ''}>
+      <label for="${id}">${c}</label>
+    </div>`;
+  }).join('') || '<p style="color:var(--muted)">No ingredients match.</p>';
+}
+
+function renderCookResults() {
+  const have = pantry;
+  if (have.size === 0) {
+    cookResultsSub.textContent = 'Pick some ingredients to see meals';
+    cookResults.innerHTML = '<p style="color:var(--muted);padding-top:10px">Tick ingredients on the left and matching meals appear here.</p>';
+    return;
+  }
+  const scored = RECIPES.map((r, i) => {
+    const cores = RECIPE_CORES[i];
+    const matched = cores.filter(c => have.has(c));
+    const missing = cores.filter(c => !have.has(c));
+    return { r, i, matched, missing, total: cores.length };
+  }).filter(x => x.matched.length > 0)
+    .sort((a, b) => (b.matched.length - b.missing.length) - (a.matched.length - a.missing.length)
+                 || b.matched.length - a.matched.length);
+
+  const makeable = scored.filter(x => x.missing.length === 0).length;
+  cookResultsSub.textContent = makeable
+    ? `${makeable} meal${makeable > 1 ? 's' : ''} you can make right now`
+    : `${scored.length} close match${scored.length > 1 ? 'es' : ''}`;
+
+  cookResults.innerHTML = scored.map(x => {
+    const pct = Math.round(x.matched.length / x.total * 100);
+    const inList = selected.has(x.i);
+    const status = x.missing.length === 0
+      ? '<span class="badge-make">✓ You can make this!</span>'
+      : `Have ${x.matched.length}/${x.total} · <span class="miss">missing ${x.missing.length}</span>`;
+    return `<div class="result ${x.missing.length === 0 ? 'makeable' : ''}">
+      <h4>${x.r.name}</h4>
+      <div class="match">${status}</div>
+      <div class="have-bar"><span style="width:${pct}%"></span></div>
+      <div class="result-actions">
+        <button class="go" data-cook-select="${x.i}">Make this meal →</button>
+        <button data-cook-add="${x.i}">${inList ? '✓ In grocery list' : '+ Add to grocery list'}</button>
+      </div>
+      <div class="result-detail" id="cd_${x.i}">
+        ${x.missing.length ? `<p class="missing-note">Still need: ${x.missing.join(', ')}</p>` : ''}
+        <strong>Ingredients</strong>
+        <ul>${x.r.ingredients.map(g => `<li>${g}</li>`).join('')}</ul>
+        <strong>Method</strong>
+        <ol>${x.r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCook() { cookModal.classList.add('open'); renderPantry(); renderCookResults(); }
+function closeCook() { cookModal.classList.remove('open'); }
+
+document.getElementById('cookLaunch').addEventListener('click', openCook);
+document.getElementById('cookClose').addEventListener('click', closeCook);
+cookModal.addEventListener('click', e => { if (e.target === cookModal) closeCook(); });
+pantrySearch.addEventListener('input', renderPantry);
+
+pantryList.addEventListener('change', e => {
+  const cb = e.target.closest('[data-pantry]'); if (!cb) return;
+  const c = cb.dataset.pantry;
+  if (cb.checked) pantry.add(c); else pantry.delete(c);
+  saveState();
+  renderCookResults();
+});
+document.getElementById('pantryClear').addEventListener('click', () => {
+  pantry.clear(); saveState(); renderPantry(); renderCookResults();
+});
+
+cookResults.addEventListener('click', e => {
+  const sel = e.target.closest('[data-cook-select]');
+  if (sel) {                                    // "Make this meal" -> show recipe
+    const d = document.getElementById('cd_' + sel.dataset.cookSelect);
+    if (d) d.classList.toggle('open');
+    return;
+  }
+  const add = e.target.closest('[data-cook-add]');
+  if (add) {                                    // add to grocery list
+    toggleSelect(Number(add.dataset.cookAdd));
+    renderCookResults();
+  }
 });
 
 document.getElementById('macroOpts').addEventListener('click', e => {
@@ -564,6 +809,7 @@ document.getElementById('clearBtn').addEventListener('click', () => {
 });
 
 render();
+renderGrocery();  // restore badge + list from saved state
 </script>
 </body>
 </html>
