@@ -26,6 +26,9 @@ shows matching meals with ingredients, method, and per-serving nutrition.
 - **Guided step-by-step cooking:** hit "Cook step-by-step" on any meal for a
   full-screen guided plan — mise en place first, then one step at a time with a
   progress bar and Back/Next controls, ending in a "meal is ready" screen
+- **Scale by servings:** a −/+ stepper on each recipe rescales every ingredient
+  quantity (with tidy fractions like `1½`), and the new amounts flow through to
+  the guided plan and the grocery list
 - No build step, no dependencies, works offline
 
 ## Run it

@@ -94,6 +94,17 @@
   .recipe-body h4 { margin: 12px 0 6px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
   .recipe-body ul, .recipe-body ol { margin: 0; padding-left: 20px; }
   .recipe-body li { margin-bottom: 4px; }
+  .ing-head { display: flex; justify-content: space-between; align-items: center; }
+  .serv-stepper { display: inline-flex; align-items: center; gap: 8px; }
+  .serv-stepper .serv-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .serv-btn {
+    width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--line);
+    background: var(--card-2); color: var(--text); cursor: pointer; font-size: 1rem; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .serv-btn:hover:not(:disabled) { border-color: var(--accent-2); }
+  .serv-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .serv-count { min-width: 16px; text-align: center; font-weight: 700; }
   .kcal { font-size: 0.82rem; color: var(--muted); }
 
   .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
@@ -159,6 +170,7 @@
   .sel-recipes { margin-bottom: 18px; }
   .sel-recipe { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; padding: 7px 0; border-bottom: 1px solid var(--line); }
   .sel-recipe button { background: none; border: none; color: #f87171; cursor: pointer; font-size: 0.8rem; }
+  .sel-recipe .serv-note { color: var(--muted); font-size: 0.8rem; }
   .ing-line { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 0.92rem; }
   .ing-line input { width: 17px; height: 17px; accent-color: var(--accent); }
   .ing-line label { cursor: pointer; }
@@ -551,6 +563,7 @@ let goal  = null;   // parsed goal object when the user describes what they want
 const selected = new Set();   // recipe indices added to the grocery list
 const checkedItems = new Set(); // ticked-off ingredient keys
 const pantry = new Set();      // core ingredient names the user has
+const servings = new Map();    // recipe id -> chosen number of servings
 
 // ---- Persistence (localStorage) ---------------------------------------
 const STORE_KEY = 'macroKitchen.v1';
@@ -559,7 +572,8 @@ function saveState() {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       selected: [...selected],
       checked: [...checkedItems],
-      pantry: [...pantry]
+      pantry: [...pantry],
+      servings: [...servings]
     }));
   } catch (_) { /* storage unavailable — app still works for the session */ }
 }
@@ -571,6 +585,7 @@ function loadState() {
     (s.selected || []).forEach(id => { if (RECIPES[id]) selected.add(id); });
     (s.checked || []).forEach(k => checkedItems.add(k));
     (s.pantry || []).forEach(p => pantry.add(p));
+    (s.servings || []).forEach(([id, n]) => { if (RECIPES[id] && n > 0) servings.set(Number(id), n); });
   } catch (_) { /* ignore corrupt data */ }
 }
 loadState();
@@ -589,6 +604,60 @@ function macroPercents(r) {
   const pc = r.p * 4, fc = r.f * 9, cc = r.c * 4;
   const total = pc + fc + cc || 1;
   return { p: Math.round(pc/total*100), f: Math.round(fc/total*100), c: Math.round(cc/total*100) };
+}
+
+// ---- Serving-size scaling ---------------------------------------------
+function getServings(id) { return servings.get(id) || RECIPES[id].serves; }
+
+const UNI_FRAC = { '¼': 0.25, '½': 0.5, '¾': 0.75, '⅓': 1/3, '⅔': 2/3, '⅛': 0.125 };
+
+function parseQty(s) {
+  s = s.trim();
+  if (UNI_FRAC[s] != null) return UNI_FRAC[s];
+  if (/^\d+\s+\d+\/\d+$/.test(s)) { const [w, fr] = s.split(/\s+/); const [n, d] = fr.split('/'); return +w + (+n) / (+d); }
+  if (/^\d+\/\d+$/.test(s)) { const [n, d] = s.split('/'); return (+n) / (+d); }
+  const v = parseFloat(s); return isNaN(v) ? null : v;
+}
+
+// Format a scaled amount using friendly cooking fractions.
+function fmtQty(v) {
+  if (v <= 0) return '0';
+  const whole = Math.floor(v + 1e-9);
+  const frac = v - whole;
+  const table = [[0, ''], [0.125, '⅛'], [0.25, '¼'], [1/3, '⅓'], [0.5, '½'],
+                 [2/3, '⅔'], [0.75, '¾'], [0.875, '⅞'], [1, '']];
+  let best = table[0], bd = Infinity;
+  for (const t of table) { const d = Math.abs(frac - t[0]); if (d < bd) { bd = d; best = t; } }
+  let w = whole, fs = best[1];
+  if (best[0] === 1) { w += 1; fs = ''; }
+  if (w === 0 && fs === '') return String(Math.round(v * 10) / 10); // tiny amount, no clean fraction
+  if (w === 0) return fs;
+  return fs ? `${w}${fs}` : `${w}`;
+}
+
+// Scale the leading quantity of an ingredient line; leave un-quantified lines alone.
+function scaleIngredient(str, factor) {
+  if (factor === 1) return str;
+  const m = str.match(/^(\d+\s+\d+\/\d+|\d+\/\d+|[¼½¾⅓⅔⅛]|\d+(?:\.\d+)?)/);
+  if (!m) return str;
+  const qty = parseQty(m[1]);
+  if (qty == null) return str;
+  return fmtQty(qty * factor) + str.slice(m[1].length);
+}
+
+function scaledIngredients(id) {
+  const factor = getServings(id) / RECIPES[id].serves;
+  return RECIPES[id].ingredients.map(s => scaleIngredient(s, factor));
+}
+
+function servingsStepper(id) {
+  const n = getServings(id);
+  return `<div class="serv-stepper">
+    <span class="serv-label">Servings</span>
+    <button class="serv-btn" data-serv-dec="${id}" ${n <= 1 ? 'disabled' : ''} aria-label="Fewer servings">−</button>
+    <span class="serv-count" id="serv_${id}">${n}</span>
+    <button class="serv-btn" data-serv-inc="${id}" aria-label="More servings">+</button>
+  </div>`;
 }
 
 function render() {
@@ -626,8 +695,11 @@ function render() {
         <details>
           <summary>View recipe →</summary>
           <div class="recipe-body">
-            <h4>Ingredients</h4>
-            <ul>${r.ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
+            <div class="ing-head">
+              <h4>Ingredients</h4>
+              ${servingsStepper(id)}
+            </div>
+            <ul id="ing_${id}">${scaledIngredients(id).map(i => `<li>${i}</li>`).join('')}</ul>
             <h4>Method</h4>
             <ol>${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
           </div>
@@ -655,7 +727,7 @@ function updateBadge() { cartBadge.textContent = selected.size; }
 function aggregateIngredients() {
   const map = new Map(); // key -> { label, count }
   for (const id of selected) {
-    for (const ing of RECIPES[id].ingredients) {
+    for (const ing of scaledIngredients(id)) {
       const key = ing.trim().toLowerCase();
       if (map.has(key)) map.get(key).count++;
       else map.set(key, { label: ing.trim(), count: 1 });
@@ -676,7 +748,7 @@ function renderGrocery() {
   copyBtn.disabled = false; clearListBtn.disabled = false;
 
   const recipesHtml = ids.map(id =>
-    `<div class="sel-recipe"><span>${RECIPES[id].name}</span><button data-remove="${id}">Remove</button></div>`
+    `<div class="sel-recipe"><span>${RECIPES[id].name} <span class="serv-note">· ${getServings(id)} serving${getServings(id) > 1 ? 's' : ''}</span></span><button data-remove="${id}">Remove</button></div>`
   ).join('');
 
   const items = aggregateIngredients();
@@ -714,8 +786,27 @@ document.getElementById('cartFab').addEventListener('click', openDrawer);
 document.getElementById('drawerClose').addEventListener('click', closeDrawer);
 overlay.addEventListener('click', closeDrawer);
 
-// Add / remove + open cooking plan via card buttons
+// Change a recipe's serving count and rescale its ingredient amounts.
+function changeServings(id, delta) {
+  const next = Math.max(1, getServings(id) + delta);
+  if (next === RECIPES[id].serves) servings.delete(id);
+  else servings.set(id, next);
+  saveState();
+  // Update any on-screen copies (card + guided plan) in place.
+  document.querySelectorAll(`#serv_${id}`).forEach(el => { el.textContent = getServings(id); });
+  document.querySelectorAll(`#ing_${id}`).forEach(el => {
+    el.innerHTML = scaledIngredients(id).map(i => `<li>${i}</li>`).join('');
+  });
+  document.querySelectorAll(`[data-serv-dec="${id}"]`).forEach(b => { b.disabled = getServings(id) <= 1; });
+  if (selected.has(id) && drawer.classList.contains('open')) renderGrocery();
+}
+
+// Add / remove + open cooking plan + adjust servings via card buttons
 grid.addEventListener('click', e => {
+  const dec = e.target.closest('[data-serv-dec]');
+  if (dec) { changeServings(Number(dec.dataset.servDec), -1); return; }
+  const inc = e.target.closest('[data-serv-inc]');
+  if (inc) { changeServings(Number(inc.dataset.servInc), +1); return; }
   const plan = e.target.closest('[data-plan]');
   if (plan) { openPlan(Number(plan.dataset.plan)); return; }
   const btn = e.target.closest('[data-add]'); if (!btn) return;
@@ -1003,15 +1094,18 @@ function renderPlan() {
   planStep = Math.max(0, Math.min(planStep, last));
 
   document.getElementById('planName').textContent = r.name;
-  document.getElementById('planMeta').textContent = `Serves ${r.serves} · ${r.time} · ${r.kcal} kcal`;
+  document.getElementById('planMeta').textContent = `${getServings(planId)} serving${getServings(planId) > 1 ? 's' : ''} · ${r.time} · ${r.kcal} kcal`;
 
   let html = '';
   if (planStep === 0) {
     html = `<div class="plan-progress"><span style="width:0%"></span></div>
       <div class="step-counter">Before you start</div>
       <div class="plan-ingredients">
-        <h4>Get these ready</h4>
-        <ul>${r.ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
+        <div class="ing-head">
+          <h4>Get these ready</h4>
+          ${servingsStepper(planId)}
+        </div>
+        <ul id="ing_${planId}">${scaledIngredients(planId).map(i => `<li>${i}</li>`).join('')}</ul>
       </div>`;
   } else if (planStep <= N) {
     const pct = Math.round(planStep / (N + 1) * 100);
@@ -1044,6 +1138,14 @@ document.getElementById('planNext').addEventListener('click', () => {
 });
 document.getElementById('planBack').addEventListener('click', () => { planStep--; renderPlan(); });
 document.getElementById('planClose').addEventListener('click', closePlan);
+planBody.addEventListener('click', e => {
+  const dec = e.target.closest('[data-serv-dec]');
+  const inc = e.target.closest('[data-serv-inc]');
+  if (!dec && !inc) return;
+  changeServings(planId, dec ? -1 : +1);
+  document.getElementById('planMeta').textContent =
+    `${getServings(planId)} serving${getServings(planId) > 1 ? 's' : ''} · ${RECIPES[planId].time} · ${RECIPES[planId].kcal} kcal`;
+});
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closePlan(); closeCook(); closeDrawer(); }
 });
