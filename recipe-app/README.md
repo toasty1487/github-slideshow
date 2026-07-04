@@ -5,6 +5,11 @@ shows matching meals with ingredients, method, and per-serving nutrition.
 
 ## Features
 
+- **Three languages with a selector:** English, Dutch (Nederlands), and German
+  (Deutsch). The EN/NL/DE switch in the top-right translates the whole interface
+  *and* every recipe — names, ingredients, and steps — and your choice is
+  remembered between visits. Goal descriptions are understood in all three
+  languages too.
 - **Describe your goal in plain English:** type something like *"build muscle,
   high protein vegetarian, quick"* or *"lose weight, light and quick"* and the app
   interprets it — setting the macro/diet filters and re-ranking every meal by how

@@ -32,6 +32,12 @@
   }
   header h1 { margin: 0 0 6px; font-size: 1.9rem; letter-spacing: -0.02em; }
   header p { margin: 0; color: var(--muted); }
+  .lang-switch { position: absolute; top: 16px; right: 16px; display: inline-flex; gap: 4px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+  .lang-btn { border: none; background: none; color: var(--muted); cursor: pointer; font-size: 0.82rem;
+    font-weight: 600; padding: 5px 11px; border-radius: 999px; }
+  .lang-btn.active { background: var(--accent-2); color: #04202b; }
+  header { position: relative; }
   .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 20px 60px; }
 
   .controls { display: grid; gap: 22px; margin-bottom: 28px; }
@@ -299,25 +305,25 @@
 </head>
 <body>
 <header>
+  <div class="lang-switch" id="langSwitch">
+    <button class="lang-btn" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="nl">NL</button>
+    <button class="lang-btn" data-lang="de">DE</button>
+  </div>
   <h1>🍳 Macro Kitchen</h1>
-  <p>Pick your goal and your diet — we'll find the meal.</p>
+  <p data-i18n="tagline">Pick your goal and your diet — we'll find the meal.</p>
 </header>
 
 <div class="wrap">
   <div class="goal-box">
-    <div class="group-label">Tell us your goal</div>
+    <div class="group-label" data-i18n="goalLabel">Tell us your goal</div>
     <div class="goal-row">
-      <input type="text" class="goal-input" id="goalInput"
+      <input type="text" class="goal-input" id="goalInput" data-i18n-ph="goalPh"
         placeholder="e.g. build muscle with high-protein vegetarian meals, quick and light">
-      <button class="goal-go" id="goalGo">Suggest meals</button>
+      <button class="goal-go" id="goalGo" data-i18n="goalGo">Suggest meals</button>
     </div>
-    <div class="goal-examples">
-      <span class="lbl">Try:</span>
-      <button class="goal-eg">lose weight, light and quick</button>
-      <button class="goal-eg">build muscle, high protein</button>
-      <button class="goal-eg">keto low-carb vegetarian</button>
-      <button class="goal-eg">carb-load for a long run</button>
-      <button class="goal-eg">quick vegan dinner</button>
+    <div class="goal-examples" id="goalExamples">
+      <span class="lbl" data-i18n="tryLabel">Try:</span>
     </div>
   </div>
 
@@ -325,68 +331,68 @@
 
   <div class="controls">
     <div>
-      <div class="group-label">1 · Macro focus</div>
+      <div class="group-label"><span data-i18n="macroNum">1</span> · <span data-i18n="macroFocus">Macro focus</span></div>
       <div class="options" id="macroOpts">
-        <button class="chip blue" data-macro="protein"><span class="emoji">💪</span> More protein</button>
-        <button class="chip blue" data-macro="fat"><span class="emoji">🥑</span> More fat</button>
-        <button class="chip blue" data-macro="carb"><span class="emoji">🍚</span> More carbs</button>
+        <button class="chip blue" data-macro="protein"><span class="emoji">💪</span> <span data-i18n="moreProtein">More protein</span></button>
+        <button class="chip blue" data-macro="fat"><span class="emoji">🥑</span> <span data-i18n="moreFat">More fat</span></button>
+        <button class="chip blue" data-macro="carb"><span class="emoji">🍚</span> <span data-i18n="moreCarbs">More carbs</span></button>
       </div>
     </div>
     <div>
-      <div class="group-label">2 · Diet</div>
+      <div class="group-label"><span data-i18n="dietNum">2</span> · <span data-i18n="dietWord">Diet</span></div>
       <div class="options" id="dietOpts">
-        <button class="chip" data-diet="vegan"><span class="emoji">🌱</span> Vegan</button>
-        <button class="chip" data-diet="vegetarian"><span class="emoji">🧀</span> Vegetarian</button>
-        <button class="chip" data-diet="meat"><span class="emoji">🍗</span> Meat</button>
+        <button class="chip" data-diet="vegan"><span class="emoji">🌱</span> <span data-i18n="vegan">Vegan</span></button>
+        <button class="chip" data-diet="vegetarian"><span class="emoji">🧀</span> <span data-i18n="vegetarian">Vegetarian</span></button>
+        <button class="chip" data-diet="meat"><span class="emoji">🍗</span> <span data-i18n="meat">Meat</span></button>
       </div>
     </div>
   </div>
 
   <button class="cook-launch" id="cookLaunch">
-    🧑‍🍳 What can I make? <span class="hint">— pick ingredients you have and build a meal</span>
+    🧑‍🍳 <span data-i18n="cookLaunch">What can I make?</span> <span class="hint" data-i18n="cookLaunchHint">— pick ingredients you have and build a meal</span>
   </button>
 
   <div class="meta">
     <span id="count"></span>
-    <button class="clear" id="clearBtn">Reset filters</button>
+    <button class="clear" id="clearBtn" data-i18n="reset">Reset filters</button>
   </div>
 
   <div class="grid" id="grid"></div>
-  <div class="empty" id="empty" style="display:none">No recipes match yet — try loosening a filter.</div>
+  <div class="empty" id="empty" data-i18n="empty" style="display:none">No recipes match yet — try loosening a filter.</div>
 </div>
 
-<footer>Macro Kitchen · a simple recipe finder · nutrition values are approximate per serving</footer>
+<footer data-i18n="footer">Macro Kitchen · a simple recipe finder · nutrition values are approximate per serving</footer>
 
-<button class="cart-fab" id="cartFab">🛒 Grocery list <span class="badge" id="cartBadge">0</span></button>
+<button class="cart-fab" id="cartFab">🛒 <span data-i18n="groceryList">Grocery list</span> <span class="badge" id="cartBadge">0</span></button>
 
 <div class="overlay" id="overlay"></div>
 <aside class="drawer" id="drawer" aria-label="Grocery list">
   <div class="drawer-head">
-    <h2>🛒 Grocery list</h2>
+    <h2>🛒 <span data-i18n="groceryList">Grocery list</span></h2>
     <button class="drawer-close" id="drawerClose" aria-label="Close">×</button>
   </div>
   <div class="drawer-body" id="drawerBody"></div>
   <div class="drawer-foot">
-    <button class="btn" id="copyBtn">Copy list</button>
-    <button class="btn primary" id="clearListBtn">Clear all</button>
+    <button class="btn" id="copyBtn" data-i18n="copyList">Copy list</button>
+    <button class="btn primary" id="clearListBtn" data-i18n="clearAll">Clear all</button>
   </div>
 </aside>
-<div class="copied-toast" id="toast">Copied to clipboard ✓</div>
+<div class="copied-toast" id="toast" data-i18n="toast">Copied to clipboard ✓</div>
 
 <div class="modal" id="cookModal">
   <div class="modal-card">
     <div class="modal-col pantry">
       <div class="modal-head">
         <div>
-          <h2>🧺 Your ingredients</h2>
-          <p>Tick what you have at home</p>
+          <h2>🧺 <span data-i18n="yourIngredients">Your ingredients</span></h2>
+          <p data-i18n="tickHave">Tick what you have at home</p>
         </div>
         <button class="modal-close" id="cookClose" aria-label="Close">×</button>
       </div>
       <div class="modal-scroll">
-        <input type="text" class="search-box" id="pantrySearch" placeholder="Search ingredients…">
+        <input type="text" class="search-box" id="pantrySearch" data-i18n-ph="searchPh" placeholder="Search ingredients…">
         <div class="pantry-actions">
-          <button class="mini-btn" id="pantryClear">Clear all</button>
+          <button class="mini-btn" id="pantryClear" data-i18n="clearAll">Clear all</button>
         </div>
         <div id="pantryList"></div>
       </div>
@@ -394,8 +400,8 @@
     <div class="modal-col">
       <div class="modal-head">
         <div>
-          <h2>🍽️ Meals you can make</h2>
-          <p id="cookResultsSub">Pick some ingredients to see meals</p>
+          <h2>🍽️ <span data-i18n="mealsYouCanMake">Meals you can make</span></h2>
+          <p id="cookResultsSub"></p>
         </div>
       </div>
       <div class="modal-scroll" id="cookResults"></div>
@@ -413,8 +419,8 @@
   </div>
   <div class="plan-body" id="planBody"></div>
   <div class="plan-foot">
-    <button id="planBack">← Back</button>
-    <button class="primary" id="planNext">Next step →</button>
+    <button id="planBack" data-i18n="back">← Back</button>
+    <button class="primary" id="planNext" data-i18n="nextStep">Next step →</button>
   </div>
 </div>
 
@@ -556,7 +562,163 @@ const RECIPES = [
   }
 ];
 
+// ---- Dutch & German translations of every recipe (aligned to RECIPES) ---
+const RECIPE_I18N = [
+  { nl:{name:"Gegrilde Kip met Citroen en Kruiden",ingredients:["2 kipfilets","2 el olijfolie","1 citroen (sap + rasp)","2 teentjes knoflook, gehakt","1 tl gedroogde oregano","Zout & peper"],steps:["Klop olie, citroen, knoflook, oregano, zout en peper door elkaar.","Bestrijk de kip en marineer 10 min.","Grill 5–6 min per kant tot 74°C van binnen.","Laat 3 min rusten, snijd en serveer."]},
+    de:{name:"Gegrilltes Zitronen-Kräuter-Hähnchen",ingredients:["2 Hähnchenbrüste","2 EL Olivenöl","1 Zitrone (Saft + Abrieb)","2 Zehen Knoblauch, gehackt","1 TL getrockneter Oregano","Salz & Pfeffer"],steps:["Öl, Zitrone, Knoblauch, Oregano, Salz und Pfeffer verrühren.","Hähnchen bestreichen und 10 Min. marinieren.","5–6 Min. pro Seite grillen, bis innen 74°C.","3 Min. ruhen lassen, schneiden und servieren."]} },
+  { nl:{name:"Gebakken Zalm met Groenten",ingredients:["2 zalmfilets","1 el olijfolie","Handvol spinazie","1 el boter","1/2 citroen","Zout & peper"],steps:["Dep de zalm droog, kruid goed.","Bak 4 min op de velkant, keer 3 min.","Laat spinazie in de pan slinken met boter.","Knijp er citroen over en serveer."]},
+    de:{name:"Gebratener Lachs mit Blattgemüse",ingredients:["2 Lachsfilets","1 EL Olivenöl","Handvoll Spinat","1 EL Butter","1/2 Zitrone","Salz & Pfeffer"],steps:["Lachs trocken tupfen, gut würzen.","4 Min. auf der Hautseite braten, 3 Min. wenden.","Spinat mit Butter in der Pfanne zusammenfallen lassen.","Mit Zitrone beträufeln und servieren."]} },
+  { nl:{name:"Roerbak Rundvlees met Broccoli",ingredients:["400g magere rundvleesreepjes","2 kop broccoliroosjes","3 el sojasaus","1 el maïzena","1 el gember, geraspt","2 teentjes knoflook","1 tl sesamolie"],steps:["Meng rundvlees met maïzena en 1 el soja.","Bak het vlees heet en snel, haal eruit.","Roerbak broccoli, knoflook, gember 3 min.","Voeg vlees terug, rest soja + sesamolie erbij, roerbak."]},
+    de:{name:"Rindfleisch-Brokkoli-Pfanne",ingredients:["400g magere Rindfleischstreifen","2 Tasse Brokkoliröschen","3 EL Sojasauce","1 EL Speisestärke","1 EL Ingwer, gerieben","2 Zehen Knoblauch","1 TL Sesamöl"],steps:["Rindfleisch mit Speisestärke und 1 EL Soja vermengen.","Fleisch heiß und schnell anbraten, herausnehmen.","Brokkoli, Knoblauch, Ingwer 3 Min. braten.","Fleisch zurückgeben, restliche Soja + Sesamöl dazu, schwenken."]} },
+  { nl:{name:"Roerei van Eiwit met Kalkoen",ingredients:["100g kalkoengehakt","5 eiwitten","1/4 ui, gesnipperd","Handvol kerstomaatjes","Zout, peper, paprika"],steps:["Bak kalkoen met ui en paprika bruin.","Voeg tomaatjes toe, bak 2 min.","Giet eiwitten erbij, roer zachtjes tot gestold.","Kruid en serveer."]},
+    de:{name:"Eiweiß-Rührei mit Pute",ingredients:["100g Putenhackfleisch","5 Eiweiß","1/4 Zwiebel, gewürfelt","Handvoll Kirschtomaten","Salz, Pfeffer, Paprika"],steps:["Pute mit Zwiebel und Paprika anbraten.","Tomaten dazugeben, 2 Min. braten.","Eiweiß angießen, sanft rühren bis fest.","Würzen und servieren."]} },
+  { nl:{name:"Avocado-Spek-Ei Bowl",ingredients:["1 avocado","3 plakjes spek","2 eieren","1 tl olijfolie","Chilivlokken","Zout & peper"],steps:["Bak het spek knapperig, leg apart.","Bak de eieren in het spekvet.","Snijd avocado in een kom.","Beleg met eieren, verkruimeld spek en chilivlokken."]},
+    de:{name:"Avocado-Speck-Ei-Bowl",ingredients:["1 Avocado","3 Scheiben Speck","2 Eier","1 TL Olivenöl","Chiliflocken","Salz & Pfeffer"],steps:["Speck knusprig braten, beiseitelegen.","Eier im Speckfett braten.","Avocado in eine Schüssel schneiden.","Mit Eiern, zerbröseltem Speck und Chiliflocken belegen."]} },
+  { nl:{name:"Ribeye met Kruidenboter",ingredients:["2 ribeye steaks","2 el boter","2 takjes tijm","2 teentjes knoflook","Zout & peper"],steps:["Kruid de steaks royaal, laat op kamertemperatuur komen.","Bak 3–4 min per kant in een hete pan.","Voeg boter, tijm, knoflook toe; bedruip 1 min.","Laat 5 min rusten voor het snijden."]},
+    de:{name:"Ribeye mit Kräuterbutter",ingredients:["2 Ribeye-Steaks","2 EL Butter","2 Zweige Thymian","2 Zehen Knoblauch","Salz & Pfeffer"],steps:["Steaks großzügig würzen, auf Zimmertemperatur bringen.","3–4 Min. pro Seite in heißer Pfanne braten.","Butter, Thymian, Knoblauch dazu; 1 Min. begießen.","Vor dem Schneiden 5 Min. ruhen lassen."]} },
+  { nl:{name:"Gevulde Zoete Aardappel met Kip",ingredients:["2 grote zoete aardappels","1 gekookte kipfilet, geplukt","1/4 kop maïs","2 el Griekse yoghurt","Bieslook","Zout & peper"],steps:["Bak zoete aardappels 40 min op 200°C.","Snijd open en maak los met een vork.","Beleg met kip, maïs, yoghurt.","Werk af met bieslook en peper."]},
+    de:{name:"Gefüllte Süßkartoffel mit Hähnchen",ingredients:["2 große Süßkartoffeln","1 gekochte Hähnchenbrust, zerpflückt","1/4 Tasse Mais","2 EL griechischer Joghurt","Schnittlauch","Salz & Pfeffer"],steps:["Süßkartoffeln 40 Min. bei 200°C backen.","Aufschneiden und auflockern.","Mit Hähnchen, Mais, Joghurt belegen.","Mit Schnittlauch und Pfeffer abschließen."]} },
+  { nl:{name:"Kip Teriyaki Rijstbowl",ingredients:["2 kop gekookte rijst","2 kippendijen, in blokjes","3 el teriyakisaus","1 wortel, in reepjes","2 lente-uitjes","Sesamzaad"],steps:["Bak de kip goudbruin.","Voeg teriyaki toe, glaceer 2 min.","Serveer op rijst met wortel.","Bestrooi met lente-ui en sesam."]},
+    de:{name:"Hähnchen-Teriyaki-Reisschale",ingredients:["2 Tasse gekochter Reis","2 Hähnchenschenkel, gewürfelt","3 EL Teriyakisauce","1 Karotte, in Streifen","2 Frühlingszwiebeln","Sesam"],steps:["Hähnchen goldbraun braten.","Teriyaki dazu, 2 Min. glasieren.","Auf Reis mit Karotte servieren.","Mit Frühlingszwiebel und Sesam bestreuen."]} },
+  { nl:{name:"Griekse Yoghurt Eiwitbowl",ingredients:["250g Griekse yoghurt (0%)","1 schep whey (optioneel)","1/2 kop bessen","1 el honing","2 el granola"],steps:["Roer whey door de yoghurt tot glad.","Beleg met bessen en granola.","Besprenkel met honing en serveer."]},
+    de:{name:"Griechischer Joghurt Protein-Bowl",ingredients:["250g griechischer Joghurt (0%)","1 Portion Whey (optional)","1/2 Tasse Beeren","1 EL Honig","2 EL Granola"],steps:["Whey glatt unter den Joghurt rühren.","Mit Beeren und Granola belegen.","Mit Honig beträufeln und servieren."]} },
+  { nl:{name:"Cottage Cheese met Ei op Toast",ingredients:["150g cottage cheese","2 eieren","2 sneetjes volkorenbrood","Chilivlokken","Zout & peper"],steps:["Kook of pocheer de eieren naar wens.","Rooster het brood, besmeer met cottage cheese.","Beleg met eieren, kruid, voeg chilivlokken toe."]},
+    de:{name:"Hüttenkäse mit Ei auf Toast",ingredients:["150g Hüttenkäse","2 Eier","2 Scheiben Vollkornbrot","Chiliflocken","Salz & Pfeffer"],steps:["Eier nach Geschmack kochen oder pochieren.","Brot toasten, mit Hüttenkäse bestreichen.","Mit Eiern belegen, würzen, Chiliflocken dazu."]} },
+  { nl:{name:"Halloumi-Kikkererwtensalade",ingredients:["200g halloumi, in plakjes","1 blik kikkererwten, uitgelekt","Komkommer, in blokjes","Kerstomaatjes","2 el olijfolie","1 el citroensap"],steps:["Bak halloumi aan beide kanten goudbruin.","Meng kikkererwten, komkommer, tomaatjes met olie + citroen.","Beleg de salade met halloumi en serveer."]},
+    de:{name:"Halloumi-Kichererbsen-Salat",ingredients:["200g Halloumi, in Scheiben","1 Dose Kichererbsen, abgetropft","Gurke, gewürfelt","Kirschtomaten","2 EL Olivenöl","1 EL Zitronensaft"],steps:["Halloumi beidseitig goldbraun braten.","Kichererbsen, Gurke, Tomaten mit Öl + Zitrone mischen.","Salat mit Halloumi belegen und servieren."]} },
+  { nl:{name:"Frittata met Spinazie en Kaas",ingredients:["6 eieren","1 kop geraspte cheddar","2 kop spinazie","1/4 kop room","1 el boter","Zout & peper"],steps:["Klop eieren met room, zout, peper.","Laat spinazie slinken in een ovenvaste pan met boter.","Giet de eieren erover, strooi kaas erop.","Bak 18 min op 180°C tot gestold."]},
+    de:{name:"Käse-Spinat-Frittata",ingredients:["6 Eier","1 Tasse geriebener Cheddar","2 Tasse Spinat","1/4 Tasse Sahne","1 EL Butter","Salz & Pfeffer"],steps:["Eier mit Sahne, Salz, Pfeffer verquirlen.","Spinat in ofenfester Pfanne mit Butter zusammenfallen lassen.","Eier darübergießen, Käse verteilen.","18 Min. bei 180°C backen, bis fest."]} },
+  { nl:{name:"Caprese-Avocado Torentje",ingredients:["1 avocado","150g verse mozzarella","2 tomaten","Verse basilicum","2 el olijfolie","Balsamicostroop"],steps:["Snijd avocado, mozzarella en tomaat.","Stapel afwisselend met basilicum.","Besprenkel met olijfolie en balsamico.","Kruid en serveer."]},
+    de:{name:"Caprese-Avocado-Türmchen",ingredients:["1 Avocado","150g frischer Mozzarella","2 Tomaten","Frisches Basilikum","2 EL Olivenöl","Balsamico-Creme"],steps:["Avocado, Mozzarella und Tomate schneiden.","Abwechselnd mit Basilikum schichten.","Mit Olivenöl und Balsamico beträufeln.","Würzen und servieren."]} },
+  { nl:{name:"Romige Champignonpasta",ingredients:["200g pasta","2 kop champignons, in plakjes","1/2 kop room","2 teentjes knoflook","1/4 kop parmezaan","Peterselie"],steps:["Kook pasta beetgaar, bewaar wat water.","Bak champignons en knoflook.","Voeg room en parmezaan toe, verdun met pastawater.","Schep de pasta erdoor, werk af met peterselie."]},
+    de:{name:"Cremige Champignon-Pasta",ingredients:["200g Pasta","2 Tasse Champignons, in Scheiben","1/2 Tasse Sahne","2 Zehen Knoblauch","1/4 Tasse Parmesan","Petersilie"],steps:["Pasta al dente kochen, etwas Wasser aufheben.","Champignons und Knoblauch anbraten.","Sahne und Parmesan dazu, mit Pastawasser lösen.","Pasta unterheben, mit Petersilie abschließen."]} },
+  { nl:{name:"Margherita Platbrood",ingredients:["2 platbroden","1/2 kop passata","150g mozzarella","Verse basilicum","1 el olijfolie"],steps:["Verdeel passata over de platbroden.","Beleg met gescheurde mozzarella.","Bak 10 min op 220°C.","Beleg met basilicum en een scheutje olie."]},
+    de:{name:"Margherita-Fladenbrot",ingredients:["2 Fladenbrote","1/2 Tasse Passata","150g Mozzarella","Frisches Basilikum","1 EL Olivenöl"],steps:["Passata auf den Fladenbroten verteilen.","Mit gezupftem Mozzarella belegen.","10 Min. bei 220°C backen.","Mit Basilikum und einem Schuss Öl belegen."]} },
+  { nl:{name:"Tofu-Roerei met Bonen",ingredients:["300g stevige tofu, verkruimeld","1/2 tl kurkuma","1 blik zwarte bonen","1/4 ui","1 el edelgistvlokken","Zout & peper"],steps:["Bak ui, voeg verkruimelde tofu en kurkuma toe.","Roer edelgistvlokken erdoor, bak 5 min.","Warm de bonen mee.","Kruid en serveer."]},
+    de:{name:"Tofu-Rührei mit Bohnen",ingredients:["300g fester Tofu, zerbröselt","1/2 TL Kurkuma","1 Dose schwarze Bohnen","1/4 Zwiebel","1 EL Hefeflocken","Salz & Pfeffer"],steps:["Zwiebel anbraten, zerbröselten Tofu und Kurkuma dazu.","Hefeflocken unterrühren, 5 Min. braten.","Bohnen mit erwärmen.","Würzen und servieren."]} },
+  { nl:{name:"Edamame-Linzen Powerbowl",ingredients:["1 kop gekookte linzen","1 kop edamame","1 kop gekookte quinoa","1 wortel, geraspt","2 el tahin","1 el citroensap"],steps:["Meng linzen, edamame, quinoa, wortel.","Klop tahin met citroen en een scheutje water.","Sprenkel de dressing over de bowl en schep om."]},
+    de:{name:"Edamame-Linsen-Power-Bowl",ingredients:["1 Tasse gekochte Linsen","1 Tasse Edamame","1 Tasse gekochte Quinoa","1 Karotte, gerieben","2 EL Tahin","1 EL Zitronensaft"],steps:["Linsen, Edamame, Quinoa, Karotte mischen.","Tahin mit Zitrone und einem Schuss Wasser verrühren.","Dressing über die Bowl geben und schwenken."]} },
+  { nl:{name:"Tempeh-Pinda Roerbak",ingredients:["200g tempeh, in blokjes","2 el pindakaas","2 el sojasaus","1 kop broccoli","1 rode paprika","1 tl gember"],steps:["Bak tempeh goudbruin.","Voeg groente en gember toe, roerbak 4 min.","Meng pindakaas + soja met water, giet erbij.","Schep om tot alles bedekt is en serveer."]},
+    de:{name:"Tempeh-Erdnuss-Pfanne",ingredients:["200g Tempeh, gewürfelt","2 EL Erdnussbutter","2 EL Sojasauce","1 Tasse Brokkoli","1 rote Paprika","1 TL Ingwer"],steps:["Tempeh goldbraun braten.","Gemüse und Ingwer dazu, 4 Min. braten.","Erdnussbutter + Soja mit Wasser mischen, angießen.","Schwenken bis alles bedeckt ist und servieren."]} },
+  { nl:{name:"Avocado-Walnoot Boerenkoolsalade",ingredients:["1 avocado","1/2 kop walnoten","4 kop boerenkool","2 el olijfolie","1 el citroensap","Zout"],steps:["Masseer boerenkool met olie, citroen en zout.","Leg avocado erbovenop.","Strooi geroosterde walnoten erover en serveer."]},
+    de:{name:"Avocado-Walnuss-Grünkohl-Salat",ingredients:["1 Avocado","1/2 Tasse Walnüsse","4 Tasse Grünkohl","2 EL Olivenöl","1 EL Zitronensaft","Salz"],steps:["Grünkohl mit Öl, Zitrone und Salz einmassieren.","Avocado darauflegen.","Geröstete Walnüsse darüberstreuen und servieren."]} },
+  { nl:{name:"Kokos-Kikkererwtencurry",ingredients:["1 blik kikkererwten","1 blik kokosmelk","2 el currypasta","1 ui","2 kop spinazie","1 el olie"],steps:["Bak ui, roer currypasta erdoor.","Voeg kokosmelk en kikkererwten toe, sudder 15 min.","Roer spinazie erdoor tot geslonken.","Serveer met rijst of naan."]},
+    de:{name:"Kokos-Kichererbsen-Curry",ingredients:["1 Dose Kichererbsen","1 Dose Kokosmilch","2 EL Currypaste","1 Zwiebel","2 Tasse Spinat","1 EL Öl"],steps:["Zwiebel anbraten, Currypaste einrühren.","Kokosmilch und Kichererbsen dazu, 15 Min. köcheln.","Spinat unterrühren, bis zusammengefallen.","Mit Reis oder Naan servieren."]} },
+  { nl:{name:"Zoete Aardappel-Zwarte Bonen Chili",ingredients:["2 zoete aardappels, in blokjes","1 blik zwarte bonen","1 blik gehakte tomaten","1 ui","2 el chilipoeder","1 kop maïs"],steps:["Bak ui, voeg chilipoeder toe.","Voeg zoete aardappel, tomaten en 1 kop water toe.","Sudder 20 min tot zacht.","Roer bonen en maïs erdoor, warm door."]},
+    de:{name:"Süßkartoffel-Bohnen-Chili",ingredients:["2 Süßkartoffeln, gewürfelt","1 Dose schwarze Bohnen","1 Dose gehackte Tomaten","1 Zwiebel","2 EL Chilipulver","1 Tasse Mais"],steps:["Zwiebel anbraten, Chilipulver dazu.","Süßkartoffel, Tomaten und 1 Tasse Wasser dazugeben.","20 Min. köcheln, bis weich.","Bohnen und Mais unterrühren, durchwärmen."]} },
+  { nl:{name:"Teriyaki Groentenoedels",ingredients:["200g noedels","3 el teriyakisaus","1 kop gemengde groente","2 lente-uitjes","1 tl sesamolie","Sesamzaad"],steps:["Kook de noedels, giet af.","Roerbak gemengde groente 3 min.","Voeg noedels + teriyaki toe, schep om.","Werk af met sesamolie, zaad en lente-ui."]},
+    de:{name:"Teriyaki-Gemüsenudeln",ingredients:["200g Nudeln","3 EL Teriyakisauce","1 Tasse gemischtes Gemüse","2 Frühlingszwiebeln","1 TL Sesamöl","Sesam"],steps:["Nudeln kochen, abgießen.","Gemischtes Gemüse 3 Min. braten.","Nudeln + Teriyaki dazu, schwenken.","Mit Sesamöl, Sesam und Frühlingszwiebel abschließen."]} }
+];
+
+// ---- UI string translations -------------------------------------------
+const I18N = {
+  en: {
+    tagline:"Pick your goal and your diet — we'll find the meal.", goalLabel:"Tell us your goal",
+    goalPh:"e.g. build muscle with high-protein vegetarian meals, quick and light", goalGo:"Suggest meals", tryLabel:"Try:",
+    macroNum:"1", macroFocus:"Macro focus", dietNum:"2", dietWord:"Diet",
+    moreProtein:"More protein", moreFat:"More fat", moreCarbs:"More carbs",
+    vegan:"Vegan", vegetarian:"Vegetarian", meat:"Meat",
+    cookLaunch:"What can I make?", cookLaunchHint:"— pick ingredients you have and build a meal",
+    reset:"Reset filters", empty:"No recipes match yet — try loosening a filter.",
+    footer:"Macro Kitchen · a simple recipe finder · nutrition values are approximate per serving",
+    groceryList:"Grocery list", copyList:"Copy list", clearAll:"Clear all", toast:"Copied to clipboard ✓",
+    yourIngredients:"Your ingredients", tickHave:"Tick what you have at home", searchPh:"Search ingredients…",
+    mealsYouCanMake:"Meals you can make", back:"← Back", nextStep:"Next step →",
+    recipeWord:["recipe","recipes"], itemWord:["item","items"], servingWord:["serving","servings"],
+    macroTag:{protein:"High protein",fat:"High fat",carb:"High carb"},
+    dietTag:{vegan:"Vegan",vegetarian:"Vegetarian",meat:"Meat"},
+    viewRecipe:"View recipe →", servingsLabel:"Servings", cookStep:"👩‍🍳 Cook step-by-step",
+    addToList:"+ Add to grocery list", addedToList:"✓ Added to list", ingredientsH:"Ingredients", methodH:"Method",
+    pickToSee:"Pick some ingredients to see meals",
+    mealsMakeNow:"{n} meals you can make right now", mealMakeNow:"{n} meal you can make right now",
+    closeMatches:"{n} close matches", closeMatch:"{n} close match", youCanMake:"✓ You can make this!",
+    haveWord:"Have", missWord:"missing", viewRecipeBtn:"View recipe", inList:"✓ In grocery list", stillNeed:"Still need: {list}",
+    emptyList:"Your grocery list is empty. Add recipes to build a shopping list.",
+    itemsToBuy:["item to buy","items to buy"], remove:"Remove", copyHeader:"Grocery list — Macro Kitchen",
+    goalFor:"Suggestions for:", showing:"showing", bestFirst:"best matches first.", clearWord:"clear",
+    nProtein:"high protein", nFat:"higher fat / low-carb", nCarb:"carb-focused", nLighter:"lighter meals",
+    nHearty:"hearty meals", nQuick:"quick to make", nVegan:"vegan", nVegetarian:"vegetarian", nMeat:"meat", bestOverall:"best overall matches",
+    rProtein:"{g}g protein", rCarbs:"{g}g carbs", rFat:"{g}g fat", rKcal:"{k} kcal", rUses:"uses {list}",
+    beforeStart:"Before you start", getReady:"Get these ready", stepOf:"Step {a} of {b}",
+    readyTitle:"{name} is ready!", enjoy:"Enjoy your meal.", startCooking:"Start cooking →", finish:"Finish →", doneClose:"Done — close",
+    examples:["lose weight, light and quick","build muscle, high protein","keto low-carb vegetarian","carb-load for a long run","quick vegan dinner"]
+  },
+  nl: {
+    tagline:"Kies je doel en je dieet — wij vinden het gerecht.", goalLabel:"Vertel ons je doel",
+    goalPh:"bijv. spieropbouw met eiwitrijke vegetarische maaltijden, snel en licht", goalGo:"Toon gerechten", tryLabel:"Probeer:",
+    macroNum:"1", macroFocus:"Macrofocus", dietNum:"2", dietWord:"Dieet",
+    moreProtein:"Meer eiwit", moreFat:"Meer vet", moreCarbs:"Meer koolhydraten",
+    vegan:"Veganistisch", vegetarian:"Vegetarisch", meat:"Vlees",
+    cookLaunch:"Wat kan ik maken?", cookLaunchHint:"— kies ingrediënten die je hebt en stel een maaltijd samen",
+    reset:"Filters wissen", empty:"Nog geen gerechten gevonden — probeer een filter losser te zetten.",
+    footer:"Macro Kitchen · een eenvoudige receptenzoeker · voedingswaarden zijn bij benadering per portie",
+    groceryList:"Boodschappenlijst", copyList:"Lijst kopiëren", clearAll:"Alles wissen", toast:"Gekopieerd naar klembord ✓",
+    yourIngredients:"Jouw ingrediënten", tickHave:"Vink aan wat je in huis hebt", searchPh:"Zoek ingrediënten…",
+    mealsYouCanMake:"Maaltijden die je kunt maken", back:"← Terug", nextStep:"Volgende stap →",
+    recipeWord:["recept","recepten"], itemWord:["item","items"], servingWord:["portie","porties"],
+    macroTag:{protein:"Veel eiwit",fat:"Veel vet",carb:"Veel koolhydraten"},
+    dietTag:{vegan:"Veganistisch",vegetarian:"Vegetarisch",meat:"Vlees"},
+    viewRecipe:"Bekijk recept →", servingsLabel:"Porties", cookStep:"👩‍🍳 Stap voor stap koken",
+    addToList:"+ Aan boodschappenlijst", addedToList:"✓ Toegevoegd", ingredientsH:"Ingrediënten", methodH:"Bereiding",
+    pickToSee:"Kies ingrediënten om maaltijden te zien",
+    mealsMakeNow:"{n} maaltijden die je nu kunt maken", mealMakeNow:"{n} maaltijd die je nu kunt maken",
+    closeMatches:"{n} bijna-matches", closeMatch:"{n} bijna-match", youCanMake:"✓ Dit kun je maken!",
+    haveWord:"Hebt", missWord:"mist", viewRecipeBtn:"Bekijk recept", inList:"✓ Op de lijst", stillNeed:"Nog nodig: {list}",
+    emptyList:"Je boodschappenlijst is leeg. Voeg recepten toe om een lijst te maken.",
+    itemsToBuy:["artikel te kopen","artikelen te kopen"], remove:"Verwijder", copyHeader:"Boodschappenlijst — Macro Kitchen",
+    goalFor:"Suggesties voor:", showing:"toont", bestFirst:"beste matches eerst.", clearWord:"wissen",
+    nProtein:"veel eiwit", nFat:"meer vet / weinig koolhydraten", nCarb:"koolhydraatrijk", nLighter:"lichtere maaltijden",
+    nHearty:"stevige maaltijden", nQuick:"snel te maken", nVegan:"veganistisch", nVegetarian:"vegetarisch", nMeat:"vlees", bestOverall:"beste algemene matches",
+    rProtein:"{g}g eiwit", rCarbs:"{g}g koolhydraten", rFat:"{g}g vet", rKcal:"{k} kcal", rUses:"gebruikt {list}",
+    beforeStart:"Voordat je begint", getReady:"Leg dit klaar", stepOf:"Stap {a} van {b}",
+    readyTitle:"{name} is klaar!", enjoy:"Eet smakelijk.", startCooking:"Begin met koken →", finish:"Afronden →", doneClose:"Klaar — sluiten",
+    examples:["afvallen, licht en snel","spieropbouw, veel eiwit","keto koolhydraatarm vegetarisch","koolhydraten laden voor een lange run","snel veganistisch diner"]
+  },
+  de: {
+    tagline:"Wähle dein Ziel und deine Ernährung — wir finden das Gericht.", goalLabel:"Nenne uns dein Ziel",
+    goalPh:"z.B. Muskelaufbau mit eiweißreichen vegetarischen Gerichten, schnell und leicht", goalGo:"Gerichte vorschlagen", tryLabel:"Versuche:",
+    macroNum:"1", macroFocus:"Makro-Fokus", dietNum:"2", dietWord:"Ernährung",
+    moreProtein:"Mehr Protein", moreFat:"Mehr Fett", moreCarbs:"Mehr Kohlenhydrate",
+    vegan:"Vegan", vegetarian:"Vegetarisch", meat:"Fleisch",
+    cookLaunch:"Was kann ich kochen?", cookLaunchHint:"— wähle vorhandene Zutaten und stelle ein Gericht zusammen",
+    reset:"Filter zurücksetzen", empty:"Noch keine Treffer — lockere einen Filter.",
+    footer:"Macro Kitchen · eine einfache Rezeptsuche · Nährwerte sind ungefähr pro Portion",
+    groceryList:"Einkaufsliste", copyList:"Liste kopieren", clearAll:"Alles löschen", toast:"In die Zwischenablage kopiert ✓",
+    yourIngredients:"Deine Zutaten", tickHave:"Hake ab, was du zu Hause hast", searchPh:"Zutaten suchen…",
+    mealsYouCanMake:"Gerichte, die du kochen kannst", back:"← Zurück", nextStep:"Nächster Schritt →",
+    recipeWord:["Rezept","Rezepte"], itemWord:["Artikel","Artikel"], servingWord:["Portion","Portionen"],
+    macroTag:{protein:"Viel Protein",fat:"Viel Fett",carb:"Viele Kohlenhydrate"},
+    dietTag:{vegan:"Vegan",vegetarian:"Vegetarisch",meat:"Fleisch"},
+    viewRecipe:"Rezept ansehen →", servingsLabel:"Portionen", cookStep:"👩‍🍳 Schritt für Schritt kochen",
+    addToList:"+ Zur Einkaufsliste", addedToList:"✓ Hinzugefügt", ingredientsH:"Zutaten", methodH:"Zubereitung",
+    pickToSee:"Wähle Zutaten, um Gerichte zu sehen",
+    mealsMakeNow:"{n} Gerichte, die du jetzt kochen kannst", mealMakeNow:"{n} Gericht, das du jetzt kochen kannst",
+    closeMatches:"{n} fast passende", closeMatch:"{n} fast passendes", youCanMake:"✓ Das kannst du kochen!",
+    haveWord:"Hast", missWord:"fehlt", viewRecipeBtn:"Rezept ansehen", inList:"✓ Auf der Liste", stillNeed:"Fehlt noch: {list}",
+    emptyList:"Deine Einkaufsliste ist leer. Füge Rezepte hinzu, um eine Liste zu erstellen.",
+    itemsToBuy:["Artikel zu kaufen","Artikel zu kaufen"], remove:"Entfernen", copyHeader:"Einkaufsliste — Macro Kitchen",
+    goalFor:"Vorschläge für:", showing:"zeigt", bestFirst:"beste Treffer zuerst.", clearWord:"löschen",
+    nProtein:"viel Protein", nFat:"mehr Fett / wenig Kohlenhydrate", nCarb:"kohlenhydratreich", nLighter:"leichtere Gerichte",
+    nHearty:"herzhafte Gerichte", nQuick:"schnell gemacht", nVegan:"vegan", nVegetarian:"vegetarisch", nMeat:"Fleisch", bestOverall:"beste Gesamttreffer",
+    rProtein:"{g}g Protein", rCarbs:"{g}g Kohlenhydrate", rFat:"{g}g Fett", rKcal:"{k} kcal", rUses:"nutzt {list}",
+    beforeStart:"Bevor du beginnst", getReady:"Lege das bereit", stepOf:"Schritt {a} von {b}",
+    readyTitle:"{name} ist fertig!", enjoy:"Guten Appetit.", startCooking:"Los kochen →", finish:"Abschließen →", doneClose:"Fertig — schließen",
+    examples:["abnehmen, leicht und schnell","Muskelaufbau, viel Protein","keto kohlenhydratarm vegetarisch","Kohlenhydrate laden für einen langen Lauf","schnelles veganes Abendessen"]
+  }
+};
+
+// Localized accessors for a recipe by id
+function locName(id) { return LANG === 'en' ? RECIPES[id].name : RECIPE_I18N[id][LANG].name; }
+function locIngredients(id) { return LANG === 'en' ? RECIPES[id].ingredients : RECIPE_I18N[id][LANG].ingredients; }
+function locSteps(id) { return LANG === 'en' ? RECIPES[id].steps : RECIPE_I18N[id][LANG].steps; }
+function locTime(r) { return r.time.replace('min', LANG === 'de' ? 'Min.' : 'min'); }
+
+function t(k) { const v = I18N[LANG] && I18N[LANG][k]; return v != null ? v : I18N.en[k]; }
+function fmt(k, p) { return t(k).replace(/{(\w+)}/g, (_, x) => p[x]); }
+function plural(n, k) { const arr = t(k); return n + ' ' + arr[n === 1 ? 0 : 1]; }
+
 // ---- State + rendering -------------------------------------------------
+let LANG  = 'en';   // 'en' | 'nl' | 'de'
 let macro = null;   // 'protein' | 'fat' | 'carb'
 let diet  = null;   // 'vegan' | 'vegetarian' | 'meat'
 let goal  = null;   // parsed goal object when the user describes what they want
@@ -570,6 +732,7 @@ const STORE_KEY = 'macroKitchen.v1';
 function saveState() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
+      lang: LANG,
       selected: [...selected],
       checked: [...checkedItems],
       pantry: [...pantry],
@@ -582,6 +745,7 @@ function loadState() {
     const raw = localStorage.getItem(STORE_KEY);
     if (!raw) return;
     const s = JSON.parse(raw);
+    if (['en', 'nl', 'de'].includes(s.lang)) LANG = s.lang;
     (s.selected || []).forEach(id => { if (RECIPES[id]) selected.add(id); });
     (s.checked || []).forEach(k => checkedItems.add(k));
     (s.pantry || []).forEach(p => pantry.add(p));
@@ -647,16 +811,22 @@ function scaleIngredient(str, factor) {
 
 function scaledIngredients(id) {
   const factor = getServings(id) / RECIPES[id].serves;
-  return RECIPES[id].ingredients.map(s => scaleIngredient(s, factor));
+  return locIngredients(id).map(s => scaleIngredient(s, factor));
 }
+
+const MACRO_WORDS = {
+  en: { p: 'Protein', f: 'Fat', c: 'Carbs' },
+  nl: { p: 'Eiwit', f: 'Vet', c: 'Koolh.' },
+  de: { p: 'Protein', f: 'Fett', c: 'Kohlenh.' }
+};
 
 function servingsStepper(id) {
   const n = getServings(id);
   return `<div class="serv-stepper">
-    <span class="serv-label">Servings</span>
-    <button class="serv-btn" data-serv-dec="${id}" ${n <= 1 ? 'disabled' : ''} aria-label="Fewer servings">−</button>
+    <span class="serv-label">${t('servingsLabel')}</span>
+    <button class="serv-btn" data-serv-dec="${id}" ${n <= 1 ? 'disabled' : ''} aria-label="−">−</button>
     <span class="serv-count" id="serv_${id}">${n}</span>
-    <button class="serv-btn" data-serv-inc="${id}" aria-label="More servings">+</button>
+    <button class="serv-btn" data-serv-inc="${id}" aria-label="+">+</button>
   </div>`;
 }
 
@@ -665,10 +835,11 @@ function render() {
   if (goal) list.sort((a, b) => goalScore(b) - goalScore(a));
   grid.innerHTML = '';
   empty.style.display = list.length ? 'none' : 'block';
-  countEl.textContent = list.length + (list.length === 1 ? ' recipe' : ' recipes');
+  countEl.textContent = plural(list.length, 'recipeWord');
 
-  const macroLabel = { protein: 'High protein', fat: 'High fat', carb: 'High carb' };
-  const dietLabel = { vegan: 'Vegan', vegetarian: 'Vegetarian', meat: 'Meat' };
+  const macroLabel = t('macroTag');
+  const dietLabel = t('dietTag');
+  const mw = MACRO_WORDS[LANG];
 
   for (const r of list) {
     const pct = macroPercents(r);
@@ -678,8 +849,8 @@ function render() {
     card.className = 'card';
     card.innerHTML = `
       <div class="card-top">
-        <h3>${r.name}</h3>
-        <div class="sub">Serves ${r.serves} · ${r.time} · <span class="kcal">${r.kcal} kcal</span></div>
+        <h3>${locName(id)}</h3>
+        <div class="sub">${plural(r.serves, 'servingWord')} · ${locTime(r)} · <span class="kcal">${r.kcal} kcal</span></div>
         <div class="tags">
           <span class="tag diet">${dietLabel[r.diet]}</span>
           <span class="tag macro">${macroLabel[r.macro]}</span>
@@ -687,26 +858,26 @@ function render() {
       </div>
       ${goal ? `<div class="why">★ ${reasonsFor(r)}</div>` : ''}
       <div class="macros">
-        <div class="macro-box"><div class="val">${r.p}g</div><div class="lbl">Protein</div><div class="bar p"><span style="width:${pct.p}%"></span></div></div>
-        <div class="macro-box"><div class="val">${r.f}g</div><div class="lbl">Fat</div><div class="bar f"><span style="width:${pct.f}%"></span></div></div>
-        <div class="macro-box"><div class="val">${r.c}g</div><div class="lbl">Carbs</div><div class="bar c"><span style="width:${pct.c}%"></span></div></div>
+        <div class="macro-box"><div class="val">${r.p}g</div><div class="lbl">${mw.p}</div><div class="bar p"><span style="width:${pct.p}%"></span></div></div>
+        <div class="macro-box"><div class="val">${r.f}g</div><div class="lbl">${mw.f}</div><div class="bar f"><span style="width:${pct.f}%"></span></div></div>
+        <div class="macro-box"><div class="val">${r.c}g</div><div class="lbl">${mw.c}</div><div class="bar c"><span style="width:${pct.c}%"></span></div></div>
       </div>
       <div class="card-foot">
         <details>
-          <summary>View recipe →</summary>
+          <summary>${t('viewRecipe')}</summary>
           <div class="recipe-body">
             <div class="ing-head">
-              <h4>Ingredients</h4>
+              <h4>${t('ingredientsH')}</h4>
               ${servingsStepper(id)}
             </div>
             <ul id="ing_${id}">${scaledIngredients(id).map(i => `<li>${i}</li>`).join('')}</ul>
-            <h4>Method</h4>
-            <ol>${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+            <h4>${t('methodH')}</h4>
+            <ol>${locSteps(id).map(s => `<li>${s}</li>`).join('')}</ol>
           </div>
         </details>
-        <button class="add-btn plan" data-plan="${id}">👩‍🍳 Cook step-by-step</button>
+        <button class="add-btn plan" data-plan="${id}">${t('cookStep')}</button>
         <button class="add-btn ${inList ? 'added' : ''}" data-add="${id}">
-          ${inList ? '✓ Added to list' : '+ Add to grocery list'}
+          ${inList ? t('addedToList') : t('addToList')}
         </button>
       </div>`;
     grid.appendChild(card);
@@ -741,14 +912,14 @@ function renderGrocery() {
   const ids = [...selected];
 
   if (ids.length === 0) {
-    drawerBody.innerHTML = '<div class="drawer-empty">Your grocery list is empty.<br>Add recipes to build a shopping list.</div>';
+    drawerBody.innerHTML = `<div class="drawer-empty">${t('emptyList')}</div>`;
     copyBtn.disabled = true; clearListBtn.disabled = true;
     return;
   }
   copyBtn.disabled = false; clearListBtn.disabled = false;
 
   const recipesHtml = ids.map(id =>
-    `<div class="sel-recipe"><span>${RECIPES[id].name} <span class="serv-note">· ${getServings(id)} serving${getServings(id) > 1 ? 's' : ''}</span></span><button data-remove="${id}">Remove</button></div>`
+    `<div class="sel-recipe"><span>${locName(id)} <span class="serv-note">· ${plural(getServings(id), 'servingWord')}</span></span><button data-remove="${id}">${t('remove')}</button></div>`
   ).join('');
 
   const items = aggregateIngredients();
@@ -764,10 +935,10 @@ function renderGrocery() {
 
   drawerBody.innerHTML = `
     <div class="sel-recipes">
-      <div class="section-label">${ids.length} recipe${ids.length > 1 ? 's' : ''}</div>
+      <div class="section-label">${plural(ids.length, 'recipeWord')}</div>
       ${recipesHtml}
     </div>
-    <div class="section-label">${items.length} item${items.length > 1 ? 's' : ''} to buy</div>
+    <div class="section-label">${plural(items.length, 'itemsToBuy')}</div>
     ${itemsHtml}`;
 }
 
@@ -834,7 +1005,7 @@ clearListBtn.addEventListener('click', () => {
 
 copyBtn.addEventListener('click', async () => {
   const items = aggregateIngredients();
-  const text = 'Grocery list — Macro Kitchen\n\n' +
+  const text = t('copyHeader') + '\n\n' +
     items.map(it => `- ${it.label}${it.count > 1 ? ` (×${it.count})` : ''}`).join('\n');
   try {
     await navigator.clipboard.writeText(text);
@@ -850,30 +1021,46 @@ copyBtn.addEventListener('click', async () => {
 
 // ---- Cook from ingredients you have ------------------------------------
 // Reduce an ingredient line ("2 tbsp olive oil") to a core name ("olive oil").
-const PREP = new Set(['diced','minced','grated','sliced','shredded','drained','cubed',
-  'julienned','chopped','crumbled','halved','peeled','optional','to taste']);
-const UNITS = new Set(['tbsp','tsp','tablespoon','tablespoons','teaspoon','teaspoons',
-  'cup','cups','g','kg','ml','l','can','cans','clove','cloves','slice','slices','sprig',
-  'sprigs','rasher','rashers','scoop','scoops','handful','large','small','oz','pinch']);
+// Preparation words (dropped from a trailing comma clause) and measurement
+// units (stripped from the front) are defined per language.
+const PREP_L = {
+  en: ['diced','minced','grated','sliced','shredded','drained','cubed','julienned','chopped','crumbled','halved','peeled','optional','to taste'],
+  nl: ['gesnipperd','gehakt','geraspt','in plakjes','geplukt','uitgelekt','in blokjes','in reepjes','verkruimeld','gehalveerd','geschild','optioneel'],
+  de: ['gewürfelt','gehackt','gerieben','in scheiben','zerpflückt','abgetropft','zerbröselt','halbiert','geschält','optional','in streifen']
+};
+const UNITS_L = {
+  en: ['tbsp','tsp','tablespoon','tablespoons','teaspoon','teaspoons','cup','cups','g','kg','ml','l','can','cans','clove','cloves','slice','slices','sprig','sprigs','rasher','rashers','scoop','scoops','handful','large','small','oz','pinch'],
+  nl: ['el','tl','kop','koppen','g','kg','ml','l','blik','blikken','teentje','teentjes','plakje','plakjes','sneetje','sneetjes','takje','takjes','reepje','reepjes','schep','handvol','grote','kleine','snufje'],
+  de: ['el','tl','tasse','tassen','g','kg','ml','l','dose','dosen','zehe','zehen','scheibe','scheiben','zweig','zweige','portion','handvoll','große','kleine','prise','schuss']
+};
+let curPrep = new Set(PREP_L.en);
+let curUnits = new Set(UNITS_L.en);
 
 function coreIngredient(str) {
   let s = str.toLowerCase().trim().replace(/\([^)]*\)/g, '').trim();
   const parts = s.split(',').map(x => x.trim()).filter(Boolean);
-  while (parts.length > 1 && PREP.has(parts[parts.length - 1])) parts.pop();
+  while (parts.length > 1 && curPrep.has(parts[parts.length - 1])) parts.pop();
   s = parts.join(', ');
   let tokens = s.split(/\s+/);
   while (tokens.length) {
     const raw = tokens[0];
     if (/^[\d/¼½¾.\-–]+$/.test(raw)) { tokens.shift(); continue; }   // pure quantity
-    if (UNITS.has(raw.replace(/[^a-z%]/g, ''))) { tokens.shift(); continue; } // 250g, tbsp…
+    if (curUnits.has(raw.replace(/[^a-zäöü%]/g, ''))) { tokens.shift(); continue; } // 250g, tbsp…
     break;
   }
   return (tokens.join(' ').trim() || str.toLowerCase().trim());
 }
 
-// Build recipe -> core ingredient sets and the master pantry list.
-const RECIPE_CORES = RECIPES.map(r => [...new Set(r.ingredients.map(coreIngredient))]);
-const ALL_CORES = [...new Set(RECIPE_CORES.flat())].sort();
+// Build recipe -> core ingredient sets and the master pantry list (per language).
+let RECIPE_CORES = [];
+let ALL_CORES = [];
+function rebuildIndexes() {
+  curPrep = new Set([...PREP_L[LANG], ...PREP_L.en]);
+  curUnits = new Set([...UNITS_L[LANG], ...UNITS_L.en]);
+  RECIPE_CORES = RECIPES.map((_, i) => [...new Set(locIngredients(i).map(coreIngredient))]);
+  ALL_CORES = [...new Set(RECIPE_CORES.flat())].sort((a, b) => a.localeCompare(b));
+}
+rebuildIndexes();
 
 const cookModal = document.getElementById('cookModal');
 const pantryList = document.getElementById('pantryList');
@@ -890,14 +1077,14 @@ function renderPantry() {
       <input type="checkbox" id="${id}" data-pantry="${c.replace(/"/g, '&quot;')}" ${pantry.has(c) ? 'checked' : ''}>
       <label for="${id}">${c}</label>
     </div>`;
-  }).join('') || '<p style="color:var(--muted)">No ingredients match.</p>';
+  }).join('') || `<p style="color:var(--muted)">—</p>`;
 }
 
 function renderCookResults() {
   const have = pantry;
   if (have.size === 0) {
-    cookResultsSub.textContent = 'Pick some ingredients to see meals';
-    cookResults.innerHTML = '<p style="color:var(--muted);padding-top:10px">Tick ingredients on the left and matching meals appear here.</p>';
+    cookResultsSub.textContent = t('pickToSee');
+    cookResults.innerHTML = `<p style="color:var(--muted);padding-top:10px">${t('pickToSee')}</p>`;
     return;
   }
   const scored = RECIPES.map((r, i) => {
@@ -911,30 +1098,30 @@ function renderCookResults() {
 
   const makeable = scored.filter(x => x.missing.length === 0).length;
   cookResultsSub.textContent = makeable
-    ? `${makeable} meal${makeable > 1 ? 's' : ''} you can make right now`
-    : `${scored.length} close match${scored.length > 1 ? 'es' : ''}`;
+    ? fmt(makeable === 1 ? 'mealMakeNow' : 'mealsMakeNow', { n: makeable })
+    : fmt(scored.length === 1 ? 'closeMatch' : 'closeMatches', { n: scored.length });
 
   cookResults.innerHTML = scored.map(x => {
     const pct = Math.round(x.matched.length / x.total * 100);
     const inList = selected.has(x.i);
     const status = x.missing.length === 0
-      ? '<span class="badge-make">✓ You can make this!</span>'
-      : `Have ${x.matched.length}/${x.total} · <span class="miss">missing ${x.missing.length}</span>`;
+      ? `<span class="badge-make">${t('youCanMake')}</span>`
+      : `${t('haveWord')} ${x.matched.length}/${x.total} · <span class="miss">${t('missWord')} ${x.missing.length}</span>`;
     return `<div class="result ${x.missing.length === 0 ? 'makeable' : ''}">
-      <h4>${x.r.name}</h4>
+      <h4>${locName(x.i)}</h4>
       <div class="match">${status}</div>
       <div class="have-bar"><span style="width:${pct}%"></span></div>
       <div class="result-actions">
-        <button class="go" data-cook-plan="${x.i}">👩‍🍳 Cook step-by-step</button>
-        <button data-cook-select="${x.i}">View recipe</button>
-        <button data-cook-add="${x.i}">${inList ? '✓ In grocery list' : '+ Add to grocery list'}</button>
+        <button class="go" data-cook-plan="${x.i}">${t('cookStep')}</button>
+        <button data-cook-select="${x.i}">${t('viewRecipeBtn')}</button>
+        <button data-cook-add="${x.i}">${inList ? t('inList') : t('addToList')}</button>
       </div>
       <div class="result-detail" id="cd_${x.i}">
-        ${x.missing.length ? `<p class="missing-note">Still need: ${x.missing.join(', ')}</p>` : ''}
-        <strong>Ingredients</strong>
-        <ul>${x.r.ingredients.map(g => `<li>${g}</li>`).join('')}</ul>
-        <strong>Method</strong>
-        <ol>${x.r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+        ${x.missing.length ? `<p class="missing-note">${fmt('stillNeed', { list: x.missing.join(', ') })}</p>` : ''}
+        <strong>${t('ingredientsH')}</strong>
+        <ul>${scaledIngredients(x.i).map(g => `<li>${g}</li>`).join('')}</ul>
+        <strong>${t('methodH')}</strong>
+        <ol>${locSteps(x.i).map(s => `<li>${s}</li>`).join('')}</ol>
       </div>
     </div>`;
   }).join('');
@@ -978,32 +1165,64 @@ cookResults.addEventListener('click', e => {
 // ---- Goal-based suggestions --------------------------------------------
 // Interpret a free-text goal into filters + scoring hints. No server needed —
 // it maps common phrases to macro focus, diet, calories, time and ingredients.
+// Keyword tables per language. The current language and English are both
+// checked, so English phrases keep working whatever the interface language.
+const GOAL_KW = {
+  en: { vegan:['vegan'], vegetarian:['vegetarian','veggie','no meat','meat-free','meat free'],
+    meat:['meat','chicken','beef','steak','pork','fish','salmon','turkey','carnivore'],
+    protein:['protein','muscle','build','bulk','gains','gain','strength','lean mass','tone'],
+    fat:['keto','low-carb','low carb','high-fat','high fat','fatty'],
+    carb:['carb','carbs','energy','endurance','run','running','marathon','fuel','training'],
+    low:['lose weight','weight loss','cut','cutting','lean','light','low-cal','low cal','low calorie','slim','deficit','fat loss','diet'],
+    high:['gain weight','bulking','mass','hearty','filling','hungry','big meal'],
+    quick:['quick','fast','easy','busy','weeknight','no time','15 min','20 min','30 min','simple','speedy'] },
+  nl: { vegan:['vegan','veganist','veganistisch'], vegetarian:['vegetarisch','vega ','geen vlees','vleesloos','zonder vlees'],
+    meat:['vlees','kip','rund','biefstuk','varken','vis','zalm','kalkoen'],
+    protein:['eiwit','proteïne','proteine','spier','spieropbouw','bulk','kracht'],
+    fat:['keto','koolhydraatarm','weinig koolhydraten','vetrijk'],
+    carb:['koolhydraat','koolhydraten','energie','uithouding','hardlopen','marathon','training'],
+    low:['afvallen','gewicht verliezen','light','licht','caloriearm','weinig calorieën','weinig calorieen','slank','dieet'],
+    high:['aankomen','massa','stevig','vullend','honger','grote maaltijd'],
+    quick:['snel','makkelijk','gemakkelijk','druk','doordeweeks','geen tijd','15 min','20 min','30 min','simpel'] },
+  de: { vegan:['vegan'], vegetarian:['vegetarisch','veggie','kein fleisch','fleischlos','ohne fleisch'],
+    meat:['fleisch','hähnchen','haehnchen','huhn','rind','steak','schwein','fisch','lachs','pute'],
+    protein:['protein','eiweiß','eiweiss','muskel','muskelaufbau','bulk','kraft'],
+    fat:['keto','low-carb','kohlenhydratarm','wenig kohlenhydrate','fettreich'],
+    carb:['kohlenhydrat','kohlenhydrate','energie','ausdauer','laufen','marathon','training'],
+    low:['abnehmen','gewicht verlieren','leicht','kalorienarm','wenig kalorien','schlank','diät','diaet'],
+    high:['zunehmen','masse','herzhaft','sättigend','saettigend','hunger','große mahlzeit','grosse mahlzeit'],
+    quick:['schnell','einfach','beschäftigt','beschaeftigt','unter der woche','keine zeit','15 min','20 min','30 min','simpel'] }
+};
+function anyKw(q, cat) {
+  return [GOAL_KW[LANG][cat] || [], GOAL_KW.en[cat] || []].some(arr => arr.some(w => q.includes(w)));
+}
+
 function parseGoal(text) {
-  const t = ' ' + text.toLowerCase() + ' ';
+  const q = ' ' + text.toLowerCase() + ' ';
   const g = { text: text.trim(), macro: null, diet: null, lowCal: false, highCal: false,
               quick: false, penalizeCarb: false, ingredients: [], notes: [] };
 
-  if (/\bvegan\b/.test(t)) g.diet = 'vegan';
-  else if (/\bvegetarian|veggie|no meat|meat[- ]?free\b/.test(t)) g.diet = 'vegetarian';
-  else if (/\b(meat|chicken|beef|steak|pork|fish|salmon|turkey|carnivore|high.?protein animal)\b/.test(t)) g.diet = 'meat';
+  if (anyKw(q, 'vegan')) g.diet = 'vegan';
+  else if (anyKw(q, 'vegetarian')) g.diet = 'vegetarian';
+  else if (anyKw(q, 'meat')) g.diet = 'meat';
 
-  if (/\b(protein|muscle|build|bulk|gains?|strength|lean mass|tone)\b/.test(t)) g.macro = 'protein';
-  if (/\b(keto|low[- ]?carb|high[- ]?fat|fatty)\b/.test(t)) { g.macro = 'fat'; g.penalizeCarb = true; }
-  if (/\b(carb|carbs|energy|endurance|run|running|marathon|carb[- ]?load|fuel|training)\b/.test(t)) g.macro = 'carb';
+  if (anyKw(q, 'protein')) g.macro = 'protein';
+  if (anyKw(q, 'fat')) { g.macro = 'fat'; g.penalizeCarb = true; }
+  if (anyKw(q, 'carb') && !g.penalizeCarb) g.macro = 'carb';   // don't let "low-carb" flip to carb
 
-  if (/\b(lose weight|weight loss|cut|cutting|lean|light|low[- ]?cal|low calorie|slim|deficit|fat loss|diet)\b/.test(t)) g.lowCal = true;
-  if (/\b(gain weight|bulking|mass gain|hearty|filling|hungry|big meal)\b/.test(t)) g.highCal = true;
-  if (/\b(quick|fast|easy|busy|weeknight|no time|15 ?min|20 ?min|30 ?min|simple|speedy)\b/.test(t)) g.quick = true;
+  if (anyKw(q, 'low')) g.lowCal = true;
+  if (anyKw(q, 'high')) g.highCal = true;
+  if (anyKw(q, 'quick')) g.quick = true;
 
-  // Ingredient mentions the user cares about
-  for (const c of ALL_CORES) if (t.includes(' ' + c.split(' ')[0])) g.ingredients.push(c);
+  // Ingredient mentions the user cares about (localized core names)
+  for (const c of ALL_CORES) if (q.includes(' ' + c.split(' ')[0])) g.ingredients.push(c);
 
-  // Human-readable interpretation
-  if (g.macro) g.notes.push({ protein: 'high protein', fat: 'higher fat / low-carb', carb: 'carb-focused' }[g.macro]);
-  if (g.diet) g.notes.push(g.diet);
-  if (g.lowCal) g.notes.push('lighter meals');
-  if (g.highCal) g.notes.push('hearty meals');
-  if (g.quick) g.notes.push('quick to make');
+  // Human-readable interpretation, in the current language
+  if (g.macro) g.notes.push(t(g.macro === 'protein' ? 'nProtein' : g.macro === 'fat' ? 'nFat' : 'nCarb'));
+  if (g.diet) g.notes.push(t(g.diet === 'vegan' ? 'nVegan' : g.diet === 'vegetarian' ? 'nVegetarian' : 'nMeat'));
+  if (g.lowCal) g.notes.push(t('nLighter'));
+  if (g.highCal) g.notes.push(t('nHearty'));
+  if (g.quick) g.notes.push(t('nQuick'));
   return g;
 }
 
@@ -1034,14 +1253,15 @@ function dietAllows(r, d) {
 // Short "why this meal" line shown on cards when a goal is active
 function reasonsFor(r) {
   const bits = [];
-  if (goal.macro === 'protein') bits.push(`${r.p}g protein`);
-  if (goal.macro === 'carb') bits.push(`${r.c}g carbs`);
-  if (goal.macro === 'fat') bits.push(`${r.f}g fat`);
-  if (goal.lowCal || goal.highCal) bits.push(`${r.kcal} kcal`);
-  if (goal.quick) bits.push(r.time);
-  const hit = goal.ingredients.filter(i => RECIPE_CORES[RECIPES.indexOf(r)].includes(i));
-  if (hit.length) bits.push('uses ' + hit.slice(0, 2).join(', '));
-  if (!bits.length) bits.push(`${r.kcal} kcal · ${r.time}`);
+  const id = RECIPES.indexOf(r);
+  if (goal.macro === 'protein') bits.push(fmt('rProtein', { g: r.p }));
+  if (goal.macro === 'carb') bits.push(fmt('rCarbs', { g: r.c }));
+  if (goal.macro === 'fat') bits.push(fmt('rFat', { g: r.f }));
+  if (goal.lowCal || goal.highCal) bits.push(fmt('rKcal', { k: r.kcal }));
+  if (goal.quick) bits.push(locTime(r));
+  const hit = goal.ingredients.filter(i => RECIPE_CORES[id].includes(i));
+  if (hit.length) bits.push(fmt('rUses', { list: hit.slice(0, 2).join(', ') }));
+  if (!bits.length) bits.push(`${r.kcal} kcal · ${locTime(r)}`);
   return bits.join(' · ');
 }
 
@@ -1055,9 +1275,9 @@ function applyGoal(text) {
   macro = goal.macro; diet = goal.diet;
   document.querySelectorAll('[data-macro]').forEach(b => b.classList.toggle('active', b.dataset.macro === macro));
   document.querySelectorAll('[data-diet]').forEach(b => b.classList.toggle('active', b.dataset.diet === diet));
-  const interp = goal.notes.length ? goal.notes.join(' · ') : 'best overall matches';
-  goalBanner.innerHTML = `<strong>Suggestions for:</strong> “${goal.text}” — showing <em>${interp}</em>, best matches first.
-    <button class="clear-goal" id="clearGoalBtn">clear</button>`;
+  const interp = goal.notes.length ? goal.notes.join(' · ') : t('bestOverall');
+  goalBanner.innerHTML = `<strong>${t('goalFor')}</strong> “${goal.text}” — ${t('showing')} <em>${interp}</em>, ${t('bestFirst')}
+    <button class="clear-goal" id="clearGoalBtn">${t('clearWord')}</button>`;
   goalBanner.classList.add('show');
   document.getElementById('clearGoalBtn').addEventListener('click', clearGoal);
   render();
@@ -1072,8 +1292,10 @@ function clearGoal() {
 
 document.getElementById('goalGo').addEventListener('click', () => applyGoal(goalInput.value));
 goalInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyGoal(goalInput.value); });
-document.querySelectorAll('.goal-eg').forEach(b =>
-  b.addEventListener('click', () => { goalInput.value = b.textContent; applyGoal(b.textContent); }));
+document.getElementById('goalExamples').addEventListener('click', e => {
+  const b = e.target.closest('.goal-eg'); if (!b) return;
+  goalInput.value = b.textContent; applyGoal(b.textContent);
+});
 
 // ---- Guided step-by-step cooking plan ----------------------------------
 const cookPlan = document.getElementById('cookPlan');
@@ -1093,16 +1315,17 @@ function renderPlan() {
   const last = N + 1;                       // index of the "done" screen
   planStep = Math.max(0, Math.min(planStep, last));
 
-  document.getElementById('planName').textContent = r.name;
-  document.getElementById('planMeta').textContent = `${getServings(planId)} serving${getServings(planId) > 1 ? 's' : ''} · ${r.time} · ${r.kcal} kcal`;
+  const steps = locSteps(planId);
+  document.getElementById('planName').textContent = locName(planId);
+  document.getElementById('planMeta').textContent = `${plural(getServings(planId), 'servingWord')} · ${locTime(r)} · ${r.kcal} kcal`;
 
   let html = '';
   if (planStep === 0) {
     html = `<div class="plan-progress"><span style="width:0%"></span></div>
-      <div class="step-counter">Before you start</div>
+      <div class="step-counter">${t('beforeStart')}</div>
       <div class="plan-ingredients">
         <div class="ing-head">
-          <h4>Get these ready</h4>
+          <h4>${t('getReady')}</h4>
           ${servingsStepper(planId)}
         </div>
         <ul id="ing_${planId}">${scaledIngredients(planId).map(i => `<li>${i}</li>`).join('')}</ul>
@@ -1110,14 +1333,14 @@ function renderPlan() {
   } else if (planStep <= N) {
     const pct = Math.round(planStep / (N + 1) * 100);
     html = `<div class="plan-progress"><span style="width:${pct}%"></span></div>
-      <div class="step-counter">Step ${planStep} of ${N}</div>
-      <div class="step-text">${r.steps[planStep - 1]}</div>`;
+      <div class="step-counter">${fmt('stepOf', { a: planStep, b: N })}</div>
+      <div class="step-text">${steps[planStep - 1]}</div>`;
   } else {
     html = `<div class="plan-progress"><span style="width:100%"></span></div>
       <div class="plan-done">
         <div class="big">🎉</div>
-        <h3>${r.name} is ready!</h3>
-        <p style="color:var(--muted)">Enjoy your meal.</p>
+        <h3>${fmt('readyTitle', { name: locName(planId) })}</h3>
+        <p style="color:var(--muted)">${t('enjoy')}</p>
       </div>`;
   }
   planBody.innerHTML = html;
@@ -1125,10 +1348,10 @@ function renderPlan() {
   const backBtn = document.getElementById('planBack');
   const nextBtn = document.getElementById('planNext');
   backBtn.style.visibility = planStep === 0 ? 'hidden' : 'visible';
-  if (planStep === 0) nextBtn.textContent = 'Start cooking →';
-  else if (planStep < N) nextBtn.textContent = 'Next step →';
-  else if (planStep === N) nextBtn.textContent = 'Finish →';
-  else nextBtn.textContent = 'Done — close';
+  if (planStep === 0) nextBtn.textContent = t('startCooking');
+  else if (planStep < N) nextBtn.textContent = t('nextStep');
+  else if (planStep === N) nextBtn.textContent = t('finish');
+  else nextBtn.textContent = t('doneClose');
 }
 
 document.getElementById('planNext').addEventListener('click', () => {
@@ -1144,7 +1367,7 @@ planBody.addEventListener('click', e => {
   if (!dec && !inc) return;
   changeServings(planId, dec ? -1 : +1);
   document.getElementById('planMeta').textContent =
-    `${getServings(planId)} serving${getServings(planId) > 1 ? 's' : ''} · ${RECIPES[planId].time} · ${RECIPES[planId].kcal} kcal`;
+    `${plural(getServings(planId), 'servingWord')} · ${locTime(RECIPES[planId])} · ${RECIPES[planId].kcal} kcal`;
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closePlan(); closeCook(); closeDrawer(); }
@@ -1169,8 +1392,38 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   render();
 });
 
-render();
-renderGrocery();  // restore badge + list from saved state
+// ---- Language switching ------------------------------------------------
+function applyLang(lang) {
+  LANG = lang;
+  document.documentElement.lang = lang;
+  // Static text nodes
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  // Example chips
+  const ex = document.getElementById('goalExamples');
+  ex.querySelectorAll('.goal-eg').forEach(b => b.remove());
+  t('examples').forEach(s => {
+    const b = document.createElement('button');
+    b.className = 'goal-eg'; b.textContent = s; ex.appendChild(b);
+  });
+  // Active language button
+  document.querySelectorAll('[data-lang]').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  // Rebuild ingredient indexes (they depend on the language) and re-render
+  rebuildIndexes();
+  pantrySearch.value = '';
+  if (goal) applyGoal(goal.text); else render();
+  renderGrocery();
+  if (cookModal.classList.contains('open')) { renderPantry(); renderCookResults(); }
+  if (cookPlan.classList.contains('open')) renderPlan();
+  saveState();
+}
+
+document.getElementById('langSwitch').addEventListener('click', e => {
+  const b = e.target.closest('[data-lang]'); if (!b) return;
+  applyLang(b.dataset.lang);
+});
+
+applyLang(LANG);   // sets up all UI text + renders, honoring the saved language
 </script>
 </body>
 </html>
