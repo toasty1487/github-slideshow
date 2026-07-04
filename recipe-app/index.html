@@ -114,6 +114,7 @@
   }
   .add-btn:hover { background: #2b303a; }
   .add-btn.added { background: rgba(74,222,128,0.14); color: var(--accent); }
+  .add-btn.plan { color: var(--accent-2); }
 
   /* Floating cart button */
   .cart-fab {
@@ -232,6 +233,56 @@
   .result-detail.open { display: block; }
   .result-detail ul, .result-detail ol { margin: 4px 0; padding-left: 18px; }
   .result-detail .missing-note { color: #fbbf24; }
+
+  /* Goal box */
+  .goal-box { margin-bottom: 22px; }
+  .goal-row { display: flex; gap: 10px; }
+  .goal-input {
+    flex: 1; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font-size: 0.95rem;
+  }
+  .goal-input:focus { outline: none; border-color: var(--accent-2); }
+  .goal-input::placeholder { color: var(--muted); }
+  .goal-go {
+    padding: 12px 20px; border-radius: 10px; border: none; cursor: pointer;
+    background: var(--accent); color: #05210f; font-weight: 700; font-size: 0.95rem; white-space: nowrap;
+  }
+  .goal-examples { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .goal-examples .lbl { font-size: 0.78rem; color: var(--muted); }
+  .goal-eg {
+    font-size: 0.78rem; background: var(--card); border: 1px solid var(--line); color: var(--muted);
+    border-radius: 999px; padding: 4px 10px; cursor: pointer;
+  }
+  .goal-eg:hover { border-color: var(--accent-2); color: var(--text); }
+  .goal-banner {
+    margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; display: none;
+    background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.35); font-size: 0.9rem;
+  }
+  .goal-banner.show { display: block; }
+  .goal-banner .clear-goal { background: none; border: none; color: var(--accent-2); cursor: pointer; font-size: 0.85rem; margin-left: 6px; }
+  .why { font-size: 0.75rem; color: var(--accent); margin: -8px 0 12px; padding: 0 18px; }
+
+  /* Guided step-by-step cooking */
+  .cook-plan { position: fixed; inset: 0; z-index: 70; background: var(--bg); display: none; flex-direction: column; }
+  .cook-plan.open { display: flex; }
+  .plan-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+  .plan-head h2 { margin: 0; font-size: 1.2rem; }
+  .plan-head .plan-sub { font-size: 0.82rem; color: var(--muted); }
+  .plan-body { flex: 1; overflow-y: auto; max-width: 680px; width: 100%; margin: 0 auto; padding: 24px 20px; }
+  .plan-progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-bottom: 22px; }
+  .plan-progress > span { display: block; height: 100%; background: var(--accent); transition: width 0.25s ease; }
+  .step-counter { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-2); margin-bottom: 10px; }
+  .step-text { font-size: 1.35rem; line-height: 1.5; }
+  .plan-ingredients { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 8px; }
+  .plan-ingredients h4 { margin: 0 0 8px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .plan-ingredients ul { margin: 0; padding-left: 18px; }
+  .plan-ingredients li { margin-bottom: 4px; }
+  .plan-done { text-align: center; padding: 20px; }
+  .plan-done .big { font-size: 3rem; }
+  .plan-foot { border-top: 1px solid var(--line); padding: 16px 20px; display: flex; gap: 12px; max-width: 680px; width: 100%; margin: 0 auto; }
+  .plan-foot button { flex: 1; padding: 14px; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 600; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  .plan-foot button.primary { background: var(--accent); color: #05210f; border-color: var(--accent); }
+  .plan-foot button:disabled { opacity: 0.35; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -241,6 +292,25 @@
 </header>
 
 <div class="wrap">
+  <div class="goal-box">
+    <div class="group-label">Tell us your goal</div>
+    <div class="goal-row">
+      <input type="text" class="goal-input" id="goalInput"
+        placeholder="e.g. build muscle with high-protein vegetarian meals, quick and light">
+      <button class="goal-go" id="goalGo">Suggest meals</button>
+    </div>
+    <div class="goal-examples">
+      <span class="lbl">Try:</span>
+      <button class="goal-eg">lose weight, light and quick</button>
+      <button class="goal-eg">build muscle, high protein</button>
+      <button class="goal-eg">keto low-carb vegetarian</button>
+      <button class="goal-eg">carb-load for a long run</button>
+      <button class="goal-eg">quick vegan dinner</button>
+    </div>
+  </div>
+
+  <div class="goal-banner" id="goalBanner"></div>
+
   <div class="controls">
     <div>
       <div class="group-label">1 · Macro focus</div>
@@ -318,6 +388,21 @@
       </div>
       <div class="modal-scroll" id="cookResults"></div>
     </div>
+  </div>
+</div>
+
+<div class="cook-plan" id="cookPlan">
+  <div class="plan-head">
+    <div>
+      <h2 id="planName">Recipe</h2>
+      <div class="plan-sub" id="planMeta"></div>
+    </div>
+    <button class="modal-close" id="planClose" aria-label="Close">×</button>
+  </div>
+  <div class="plan-body" id="planBody"></div>
+  <div class="plan-foot">
+    <button id="planBack">← Back</button>
+    <button class="primary" id="planNext">Next step →</button>
   </div>
 </div>
 
@@ -462,6 +547,7 @@ const RECIPES = [
 // ---- State + rendering -------------------------------------------------
 let macro = null;   // 'protein' | 'fat' | 'carb'
 let diet  = null;   // 'vegan' | 'vegetarian' | 'meat'
+let goal  = null;   // parsed goal object when the user describes what they want
 const selected = new Set();   // recipe indices added to the grocery list
 const checkedItems = new Set(); // ticked-off ingredient keys
 const pantry = new Set();      // core ingredient names the user has
@@ -507,6 +593,7 @@ function macroPercents(r) {
 
 function render() {
   const list = RECIPES.filter(r => (!macro || r.macro === macro) && dietMatch(r));
+  if (goal) list.sort((a, b) => goalScore(b) - goalScore(a));
   grid.innerHTML = '';
   empty.style.display = list.length ? 'none' : 'block';
   countEl.textContent = list.length + (list.length === 1 ? ' recipe' : ' recipes');
@@ -529,6 +616,7 @@ function render() {
           <span class="tag macro">${macroLabel[r.macro]}</span>
         </div>
       </div>
+      ${goal ? `<div class="why">★ ${reasonsFor(r)}</div>` : ''}
       <div class="macros">
         <div class="macro-box"><div class="val">${r.p}g</div><div class="lbl">Protein</div><div class="bar p"><span style="width:${pct.p}%"></span></div></div>
         <div class="macro-box"><div class="val">${r.f}g</div><div class="lbl">Fat</div><div class="bar f"><span style="width:${pct.f}%"></span></div></div>
@@ -544,6 +632,7 @@ function render() {
             <ol>${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
           </div>
         </details>
+        <button class="add-btn plan" data-plan="${id}">👩‍🍳 Cook step-by-step</button>
         <button class="add-btn ${inList ? 'added' : ''}" data-add="${id}">
           ${inList ? '✓ Added to list' : '+ Add to grocery list'}
         </button>
@@ -625,8 +714,10 @@ document.getElementById('cartFab').addEventListener('click', openDrawer);
 document.getElementById('drawerClose').addEventListener('click', closeDrawer);
 overlay.addEventListener('click', closeDrawer);
 
-// Add / remove via card buttons
+// Add / remove + open cooking plan via card buttons
 grid.addEventListener('click', e => {
+  const plan = e.target.closest('[data-plan]');
+  if (plan) { openPlan(Number(plan.dataset.plan)); return; }
   const btn = e.target.closest('[data-add]'); if (!btn) return;
   toggleSelect(Number(btn.dataset.add));
 });
@@ -743,7 +834,8 @@ function renderCookResults() {
       <div class="match">${status}</div>
       <div class="have-bar"><span style="width:${pct}%"></span></div>
       <div class="result-actions">
-        <button class="go" data-cook-select="${x.i}">Make this meal →</button>
+        <button class="go" data-cook-plan="${x.i}">👩‍🍳 Cook step-by-step</button>
+        <button data-cook-select="${x.i}">View recipe</button>
         <button data-cook-add="${x.i}">${inList ? '✓ In grocery list' : '+ Add to grocery list'}</button>
       </div>
       <div class="result-detail" id="cd_${x.i}">
@@ -777,8 +869,10 @@ document.getElementById('pantryClear').addEventListener('click', () => {
 });
 
 cookResults.addEventListener('click', e => {
+  const plan = e.target.closest('[data-cook-plan]');
+  if (plan) { closeCook(); openPlan(Number(plan.dataset.cookPlan)); return; }
   const sel = e.target.closest('[data-cook-select]');
-  if (sel) {                                    // "Make this meal" -> show recipe
+  if (sel) {                                    // "View recipe" -> show details
     const d = document.getElementById('cd_' + sel.dataset.cookSelect);
     if (d) d.classList.toggle('open');
     return;
@@ -788,6 +882,170 @@ cookResults.addEventListener('click', e => {
     toggleSelect(Number(add.dataset.cookAdd));
     renderCookResults();
   }
+});
+
+// ---- Goal-based suggestions --------------------------------------------
+// Interpret a free-text goal into filters + scoring hints. No server needed —
+// it maps common phrases to macro focus, diet, calories, time and ingredients.
+function parseGoal(text) {
+  const t = ' ' + text.toLowerCase() + ' ';
+  const g = { text: text.trim(), macro: null, diet: null, lowCal: false, highCal: false,
+              quick: false, penalizeCarb: false, ingredients: [], notes: [] };
+
+  if (/\bvegan\b/.test(t)) g.diet = 'vegan';
+  else if (/\bvegetarian|veggie|no meat|meat[- ]?free\b/.test(t)) g.diet = 'vegetarian';
+  else if (/\b(meat|chicken|beef|steak|pork|fish|salmon|turkey|carnivore|high.?protein animal)\b/.test(t)) g.diet = 'meat';
+
+  if (/\b(protein|muscle|build|bulk|gains?|strength|lean mass|tone)\b/.test(t)) g.macro = 'protein';
+  if (/\b(keto|low[- ]?carb|high[- ]?fat|fatty)\b/.test(t)) { g.macro = 'fat'; g.penalizeCarb = true; }
+  if (/\b(carb|carbs|energy|endurance|run|running|marathon|carb[- ]?load|fuel|training)\b/.test(t)) g.macro = 'carb';
+
+  if (/\b(lose weight|weight loss|cut|cutting|lean|light|low[- ]?cal|low calorie|slim|deficit|fat loss|diet)\b/.test(t)) g.lowCal = true;
+  if (/\b(gain weight|bulking|mass gain|hearty|filling|hungry|big meal)\b/.test(t)) g.highCal = true;
+  if (/\b(quick|fast|easy|busy|weeknight|no time|15 ?min|20 ?min|30 ?min|simple|speedy)\b/.test(t)) g.quick = true;
+
+  // Ingredient mentions the user cares about
+  for (const c of ALL_CORES) if (t.includes(' ' + c.split(' ')[0])) g.ingredients.push(c);
+
+  // Human-readable interpretation
+  if (g.macro) g.notes.push({ protein: 'high protein', fat: 'higher fat / low-carb', carb: 'carb-focused' }[g.macro]);
+  if (g.diet) g.notes.push(g.diet);
+  if (g.lowCal) g.notes.push('lighter meals');
+  if (g.highCal) g.notes.push('hearty meals');
+  if (g.quick) g.notes.push('quick to make');
+  return g;
+}
+
+function minutesOf(r) { return parseInt(r.time, 10) || 30; }
+
+function goalScore(r) {
+  if (!goal) return 0;
+  let s = 0;
+  if (goal.macro && r.macro === goal.macro) s += 6;
+  if (goal.diet) s += dietAllows(r, goal.diet) ? 4 : -8;
+  if (goal.macro === 'protein') s += r.p / 12;
+  if (goal.macro === 'carb') s += r.c / 22;
+  if (goal.macro === 'fat') s += r.f / 12;
+  if (goal.penalizeCarb) s -= r.c / 18;
+  if (goal.lowCal) s += (550 - r.kcal) / 90;
+  if (goal.highCal) s += (r.kcal - 380) / 90;
+  if (goal.quick) { const m = minutesOf(r); s += m <= 20 ? 3 : m <= 30 ? 1 : -1.5; }
+  const cores = RECIPE_CORES[RECIPES.indexOf(r)];
+  for (const ing of goal.ingredients) if (cores.includes(ing)) s += 3;
+  return s;
+}
+
+function dietAllows(r, d) {
+  if (d === 'vegetarian') return r.diet === 'vegetarian' || r.diet === 'vegan';
+  return r.diet === d;
+}
+
+// Short "why this meal" line shown on cards when a goal is active
+function reasonsFor(r) {
+  const bits = [];
+  if (goal.macro === 'protein') bits.push(`${r.p}g protein`);
+  if (goal.macro === 'carb') bits.push(`${r.c}g carbs`);
+  if (goal.macro === 'fat') bits.push(`${r.f}g fat`);
+  if (goal.lowCal || goal.highCal) bits.push(`${r.kcal} kcal`);
+  if (goal.quick) bits.push(r.time);
+  const hit = goal.ingredients.filter(i => RECIPE_CORES[RECIPES.indexOf(r)].includes(i));
+  if (hit.length) bits.push('uses ' + hit.slice(0, 2).join(', '));
+  if (!bits.length) bits.push(`${r.kcal} kcal · ${r.time}`);
+  return bits.join(' · ');
+}
+
+const goalInput = document.getElementById('goalInput');
+const goalBanner = document.getElementById('goalBanner');
+
+function applyGoal(text) {
+  if (!text.trim()) { clearGoal(); return; }
+  goal = parseGoal(text);
+  // Reset chips so each goal is self-contained, then reflect the goal's macro/diet
+  macro = goal.macro; diet = goal.diet;
+  document.querySelectorAll('[data-macro]').forEach(b => b.classList.toggle('active', b.dataset.macro === macro));
+  document.querySelectorAll('[data-diet]').forEach(b => b.classList.toggle('active', b.dataset.diet === diet));
+  const interp = goal.notes.length ? goal.notes.join(' · ') : 'best overall matches';
+  goalBanner.innerHTML = `<strong>Suggestions for:</strong> “${goal.text}” — showing <em>${interp}</em>, best matches first.
+    <button class="clear-goal" id="clearGoalBtn">clear</button>`;
+  goalBanner.classList.add('show');
+  document.getElementById('clearGoalBtn').addEventListener('click', clearGoal);
+  render();
+}
+
+function clearGoal() {
+  goal = null;
+  goalInput.value = '';
+  goalBanner.classList.remove('show');
+  render();
+}
+
+document.getElementById('goalGo').addEventListener('click', () => applyGoal(goalInput.value));
+goalInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyGoal(goalInput.value); });
+document.querySelectorAll('.goal-eg').forEach(b =>
+  b.addEventListener('click', () => { goalInput.value = b.textContent; applyGoal(b.textContent); }));
+
+// ---- Guided step-by-step cooking plan ----------------------------------
+const cookPlan = document.getElementById('cookPlan');
+const planBody = document.getElementById('planBody');
+let planId = null, planStep = 0;   // step 0 = mise en place, 1..N = steps, N+1 = done
+
+function openPlan(id) {
+  planId = id; planStep = 0;
+  cookPlan.classList.add('open');
+  renderPlan();
+}
+function closePlan() { cookPlan.classList.remove('open'); }
+
+function renderPlan() {
+  const r = RECIPES[planId];
+  const N = r.steps.length;
+  const last = N + 1;                       // index of the "done" screen
+  planStep = Math.max(0, Math.min(planStep, last));
+
+  document.getElementById('planName').textContent = r.name;
+  document.getElementById('planMeta').textContent = `Serves ${r.serves} · ${r.time} · ${r.kcal} kcal`;
+
+  let html = '';
+  if (planStep === 0) {
+    html = `<div class="plan-progress"><span style="width:0%"></span></div>
+      <div class="step-counter">Before you start</div>
+      <div class="plan-ingredients">
+        <h4>Get these ready</h4>
+        <ul>${r.ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
+      </div>`;
+  } else if (planStep <= N) {
+    const pct = Math.round(planStep / (N + 1) * 100);
+    html = `<div class="plan-progress"><span style="width:${pct}%"></span></div>
+      <div class="step-counter">Step ${planStep} of ${N}</div>
+      <div class="step-text">${r.steps[planStep - 1]}</div>`;
+  } else {
+    html = `<div class="plan-progress"><span style="width:100%"></span></div>
+      <div class="plan-done">
+        <div class="big">🎉</div>
+        <h3>${r.name} is ready!</h3>
+        <p style="color:var(--muted)">Enjoy your meal.</p>
+      </div>`;
+  }
+  planBody.innerHTML = html;
+
+  const backBtn = document.getElementById('planBack');
+  const nextBtn = document.getElementById('planNext');
+  backBtn.style.visibility = planStep === 0 ? 'hidden' : 'visible';
+  if (planStep === 0) nextBtn.textContent = 'Start cooking →';
+  else if (planStep < N) nextBtn.textContent = 'Next step →';
+  else if (planStep === N) nextBtn.textContent = 'Finish →';
+  else nextBtn.textContent = 'Done — close';
+}
+
+document.getElementById('planNext').addEventListener('click', () => {
+  const N = RECIPES[planId].steps.length;
+  if (planStep > N) { closePlan(); return; }
+  planStep++; renderPlan();
+});
+document.getElementById('planBack').addEventListener('click', () => { planStep--; renderPlan(); });
+document.getElementById('planClose').addEventListener('click', closePlan);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closePlan(); closeCook(); closeDrawer(); }
 });
 
 document.getElementById('macroOpts').addEventListener('click', e => {
@@ -805,6 +1063,7 @@ document.getElementById('dietOpts').addEventListener('click', e => {
 document.getElementById('clearBtn').addEventListener('click', () => {
   macro = null; diet = null;
   document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+  goal = null; goalInput.value = ''; goalBanner.classList.remove('show');
   render();
 });
 

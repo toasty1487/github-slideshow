@@ -5,6 +5,10 @@ shows matching meals with ingredients, method, and per-serving nutrition.
 
 ## Features
 
+- **Describe your goal in plain English:** type something like *"build muscle,
+  high protein vegetarian, quick"* or *"lose weight, light and quick"* and the app
+  interprets it — setting the macro/diet filters and re-ranking every meal by how
+  well it fits, with a short "why this meal" line on each card
 - **Macro focus:** More protein 💪 · More fat 🥑 · More carbs 🍚
 - **Diet:** Vegan 🌱 · Vegetarian 🧀 · Meat 🍗 (vegan recipes also show under vegetarian)
 - Filters combine — every macro × diet combination has at least one recipe
@@ -19,6 +23,9 @@ shows matching meals with ingredients, method, and per-serving nutrition.
   ingredients in your kitchen and instantly see which meals you can make right now
   (and which are one or two items short), then build the meal or add missing items
   to your grocery list
+- **Guided step-by-step cooking:** hit "Cook step-by-step" on any meal for a
+  full-screen guided plan — mise en place first, then one step at a time with a
+  progress bar and Back/Next controls, ending in a "meal is ready" screen
 - No build step, no dependencies, works offline
 
 ## Run it
