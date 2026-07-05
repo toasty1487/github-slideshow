@@ -1,6 +1,7 @@
 # 🍳 Macro Kitchen — Recipe Finder
 
-A tiny, self-contained recipe app. Pick a **macro focus** and a **diet**, and it
+A tiny, self-contained recipe app with **100 fresh, wholesome recipes** balanced
+across every macro × diet category. Pick a **macro focus** and a **diet**, and it
 shows matching meals with ingredients, method, and per-serving nutrition.
 
 ## Features
@@ -34,6 +35,9 @@ shows matching meals with ingredients, method, and per-serving nutrition.
 - **Scale by servings:** a −/+ stepper on each recipe rescales every ingredient
   quantity (with tidy fractions like `1½`), and the new amounts flow through to
   the guided plan and the grocery list
+- **Weekly plan builder:** compose a whole varied plan in one tap — it respects
+  your filters/goal, shows per-plan calorie and macro totals, lets you swap any
+  meal, and sends the combined shopping list to your grocery list
 - No build step, no dependencies, works offline
 
 ## Run it
