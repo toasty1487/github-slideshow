@@ -35,9 +35,12 @@ shows matching meals with ingredients, method, and per-serving nutrition.
 - **Scale by servings:** a −/+ stepper on each recipe rescales every ingredient
   quantity (with tidy fractions like `1½`), and the new amounts flow through to
   the guided plan and the grocery list
-- **Weekly plan builder:** compose a whole varied plan in one tap — it respects
-  your filters/goal, shows per-plan calorie and macro totals, lets you swap any
-  meal, and sends the combined shopping list to your grocery list
+- **Weekly plan builder:** compose a whole week in one tap — **breakfast, lunch
+  and dinner per day** — to your **kcal/day, protein/day and max-carbs/day**
+  targets, with per-day badges showing how each day measures up. Keep the same
+  breakfast all week (as people often do), swap any single meal, see per-plan and
+  per-day totals, and send the combined shopping list to your grocery list. Ships
+  with 23 dedicated breakfast recipes (yogurt, bread, oats, keto) across all diets.
 - No build step, no dependencies, works offline
 
 ## Run it
