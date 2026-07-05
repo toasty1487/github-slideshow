@@ -248,6 +248,8 @@
   .mp-meal .acts button { font-size: 0.74rem; padding: 5px 8px; border-radius: 8px; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--text); }
   .mp-meal .acts button.go { background: var(--accent); color: #05210f; border-color: var(--accent); font-weight: 600; }
   @media (max-width: 620px) { .mp-meal .slot { width: 100%; flex-basis: 100%; } .mp-meal { flex-wrap: wrap; } }
+  .mp-shop { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .mp-shop-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
 
   /* Cook modal */
   .modal {
@@ -1314,7 +1316,7 @@ const PLAN_T = {
     kcalDay:"kcal/day", kcalPh:"e.g. 1600", proteinDay:"protein/day (g)", proteinPh:"e.g. 110",
     carbMax:"max carbs/day (g)", carbPh:"e.g. 200", sameBreakfast:"Same breakfast every day",
     dayWord:"Day", breakfast:"Breakfast", lunch:"Lunch", dinner:"Dinner",
-    generate:"Generate plan", regenerate:"Regenerate", total:"Plan total",
+    generate:"Generate plan", regenerate:"Regenerate", total:"Plan total", shopping:"Shopping list",
     addAll:"Add all to grocery list", copyPlan:"Copy plan", swap:"Swap", cook:"Cook",
     empty:"Tap Generate to build your week.", noRecipes:"No recipes match your filters — loosen them and try again.",
     copyHeader:"Weekly plan — Macro Kitchen" },
@@ -1323,7 +1325,7 @@ const PLAN_T = {
     kcalDay:"kcal/dag", kcalPh:"bijv. 1600", proteinDay:"eiwit/dag (g)", proteinPh:"bijv. 110",
     carbMax:"max koolh./dag (g)", carbPh:"bijv. 200", sameBreakfast:"Elke dag hetzelfde ontbijt",
     dayWord:"Dag", breakfast:"Ontbijt", lunch:"Lunch", dinner:"Diner",
-    generate:"Genereer plan", regenerate:"Opnieuw", total:"Totaal plan",
+    generate:"Genereer plan", regenerate:"Opnieuw", total:"Totaal plan", shopping:"Boodschappenlijst",
     addAll:"Alles op boodschappenlijst", copyPlan:"Kopieer plan", swap:"Vervang", cook:"Koken",
     empty:"Tik op Genereer om je week te maken.", noRecipes:"Geen recepten passen bij je filters — zet ze losser en probeer opnieuw.",
     copyHeader:"Weekplan — Macro Kitchen" },
@@ -1332,7 +1334,7 @@ const PLAN_T = {
     kcalDay:"kcal/Tag", kcalPh:"z.B. 1600", proteinDay:"Protein/Tag (g)", proteinPh:"z.B. 110",
     carbMax:"max KH/Tag (g)", carbPh:"z.B. 200", sameBreakfast:"Jeden Tag gleiches Frühstück",
     dayWord:"Tag", breakfast:"Frühstück", lunch:"Mittagessen", dinner:"Abendessen",
-    generate:"Plan erstellen", regenerate:"Neu erstellen", total:"Plan gesamt",
+    generate:"Plan erstellen", regenerate:"Neu erstellen", total:"Plan gesamt", shopping:"Einkaufsliste",
     addAll:"Alles zur Einkaufsliste", copyPlan:"Plan kopieren", swap:"Tauschen", cook:"Kochen",
     empty:"Tippe auf Erstellen für deine Woche.", noRecipes:"Keine Rezepte passen zu deinen Filtern — lockere sie und versuche es erneut.",
     copyHeader:"Wochenplan — Macro Kitchen" }
@@ -1352,6 +1354,23 @@ function variationFor(id, dayIdx) {
   if (id == null || !RECIPES[id].style) return '';
   const list = VARIATIONS[LANG] || VARIATIONS.en;
   return list[dayIdx % list.length];
+}
+let mpShowList = false;              // shopping list expanded inside the plan?
+const mpShopChecked = new Set();     // ticked-off shopping items
+
+// Combined shopping list for the whole plan: every meal instance counts, so a
+// breakfast repeated across the week is multiplied accordingly.
+function planShoppingItems() {
+  const map = new Map();
+  mealPlan.forEach(day => SLOTS.forEach(s => {
+    const id = day[s]; if (id == null) return;
+    for (const ing of scaledIngredients(id)) {
+      const key = ing.trim().toLowerCase();
+      if (map.has(key)) map.get(key).count++;
+      else map.set(key, { label: ing.trim(), count: 1 });
+    }
+  }));
+  return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
 }
 function mealOf(r) { return r.meal || 'main'; }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
@@ -1521,9 +1540,28 @@ function renderMealPlan() {
     <div>${MACRO_WORDS[LANG].f}<b>${tf}g</b></div>
     <div>${MACRO_WORDS[LANG].c}<b>${tc}g</b></div>
   </div>`;
+
+  if (mpShowList) {
+    const items = planShoppingItems();
+    html += `<div class="mp-shop">
+      <div class="mp-shop-head">
+        <span class="section-label">🛒 ${pt('shopping')} · ${plural(items.length, 'itemsToBuy')}</span>
+        <button class="mini-btn" id="mpShopCopy">${t('copyList')}</button>
+      </div>
+      ${items.map(it => {
+        const key = it.label.toLowerCase();
+        const ch = mpShopChecked.has(key);
+        return `<div class="ing-line ${ch ? 'checked' : ''}">
+          <input type="checkbox" data-shop-check="${key.replace(/"/g, '&quot;')}" ${ch ? 'checked' : ''}>
+          <label>${it.label}${it.count > 1 ? ` <span class="ing-count">×${it.count}</span>` : ''}</label>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
   body.innerHTML = html;
-  foot.innerHTML = `<button class="btn" id="mpCopy">${pt('copyPlan')}</button>
-    <button class="btn primary" id="mpAddAll">${pt('addAll')}</button>`;
+  foot.innerHTML = `<button class="btn primary" id="mpShopToggle">🛒 ${pt('shopping')}</button>
+    <button class="btn" id="mpCopy">${pt('copyPlan')}</button>`;
 }
 
 async function copyMealPlan() {
@@ -1543,10 +1581,14 @@ async function copyMealPlan() {
   setTimeout(() => toast.classList.remove('show'), 1600);
 }
 
-function planRecipeIds() {
-  const ids = new Set();
-  mealPlan.forEach(day => SLOTS.forEach(s => { if (day[s] != null) ids.add(day[s]); }));
-  return [...ids];
+async function copyShoppingList() {
+  const items = planShoppingItems();
+  const text = pt('shopping') + ' — Macro Kitchen\n\n' +
+    items.map(it => `- ${it.label}${it.count > 1 ? ` (×${it.count})` : ''}`).join('\n');
+  try { await navigator.clipboard.writeText(text); }
+  catch (_) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  const toast = document.getElementById('toast'); toast.textContent = t('toast'); toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1600);
 }
 
 function openMealPlan() { mealPlanModal.classList.add('open'); renderMealPlan(); }
@@ -1564,16 +1606,21 @@ mealPlanModal.addEventListener('click', e => {
   const sw = e.target.closest('[data-mp-swap]');
   if (sw) { const [i, s] = sw.dataset.mpSwap.split(':'); swapMeal(Number(i), s); return; }
   if (e.target.closest('#mpCopy')) { copyMealPlan(); return; }
-  if (e.target.closest('#mpAddAll')) {
-    planRecipeIds().forEach(id => selected.add(id));
-    saveState(); render(); renderGrocery();
-    const toast = document.getElementById('toast'); toast.textContent = t('addedToList'); toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 1600);
+  if (e.target.closest('#mpShopCopy')) { copyShoppingList(); return; }
+  if (e.target.closest('#mpShopToggle')) {
+    mpShowList = !mpShowList; renderMealPlan();
+    if (mpShowList) setTimeout(() => document.querySelector('.mp-shop')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
     return;
   }
 });
 mealPlanModal.addEventListener('change', e => {
-  if (e.target.id === 'mpSameB') { mpSameBreakfast = e.target.checked; saveState(); if (mealPlan.length) renderMealPlan(); }
+  if (e.target.id === 'mpSameB') { mpSameBreakfast = e.target.checked; saveState(); if (mealPlan.length) renderMealPlan(); return; }
+  const sc = e.target.closest('[data-shop-check]');
+  if (sc) {
+    const k = sc.dataset.shopCheck;
+    if (sc.checked) mpShopChecked.add(k); else mpShopChecked.delete(k);
+    sc.closest('.ing-line').classList.toggle('checked', sc.checked);
+  }
 });
 // Target inputs — update state without a full re-render so focus stays put.
 mealPlanModal.addEventListener('input', e => {
