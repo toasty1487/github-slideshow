@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macro Kitchen — Recipe Finder</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #1a1d24;
+    --card-2: #22262f;
+    --line: #2e333d;
+    --text: #e8eaed;
+    --muted: #9aa0aa;
+    --accent: #4ade80;
+    --accent-2: #38bdf8;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header {
+    padding: 32px 20px 20px;
+    text-align: center;
+    background: radial-gradient(1200px 300px at 50% -50px, rgba(74,222,128,0.12), transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 { margin: 0 0 6px; font-size: 1.9rem; letter-spacing: -0.02em; }
+  header p { margin: 0; color: var(--muted); }
+  .lang-switch { position: absolute; top: 16px; right: 16px; display: inline-flex; gap: 4px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+  .lang-btn { border: none; background: none; color: var(--muted); cursor: pointer; font-size: 0.82rem;
+    font-weight: 600; padding: 5px 11px; border-radius: 999px; }
+  .lang-btn.active { background: var(--accent-2); color: #04202b; }
+  header { position: relative; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  .controls { display: grid; gap: 22px; margin-bottom: 28px; }
+  .group-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
+  .options { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip {
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chip:hover { border-color: var(--accent-2); }
+  .chip .emoji { font-size: 1.05rem; }
+  .chip.active { background: var(--accent); color: #05210f; border-color: var(--accent); font-weight: 600; }
+  .chip.active.blue { background: var(--accent-2); color: #04202b; border-color: var(--accent-2); }
+
+  .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; color: var(--muted); font-size: 0.9rem; }
+  .clear { background: none; border: none; color: var(--accent-2); cursor: pointer; font-size: 0.9rem; }
+  .clear:hover { text-decoration: underline; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-top { padding: 18px 18px 0; }
+  .card h3 { margin: 0 0 4px; font-size: 1.15rem; }
+  .card .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 14px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tag { font-size: 0.72rem; padding: 3px 9px; border-radius: 999px; background: var(--card-2); color: var(--muted); border: 1px solid var(--line); }
+  .tag.diet { color: var(--accent); border-color: rgba(74,222,128,0.35); }
+  .tag.macro { color: var(--accent-2); border-color: rgba(56,189,248,0.35); }
+
+  .macros { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; padding: 0 18px 14px; }
+  .macro-box { background: var(--card-2); border-radius: 10px; padding: 8px; text-align: center; }
+  .macro-box .val { font-weight: 700; font-size: 1.05rem; }
+  .macro-box .lbl { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .bar { height: 5px; border-radius: 3px; margin-top: 6px; background: var(--line); overflow: hidden; }
+  .bar > span { display: block; height: 100%; }
+  .bar.p > span { background: #f87171; }
+  .bar.f > span { background: #fbbf24; }
+  .bar.c > span { background: #60a5fa; }
+
+  .card-foot { margin-top: auto; border-top: 1px solid var(--line); }
+  details summary { cursor: pointer; padding: 14px 18px; color: var(--accent-2); font-size: 0.9rem; list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  details[open] summary { color: var(--text); }
+  .recipe-body { padding: 0 18px 18px; font-size: 0.9rem; }
+  .recipe-body h4 { margin: 12px 0 6px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .recipe-body ul, .recipe-body ol { margin: 0; padding-left: 20px; }
+  .recipe-body li { margin-bottom: 4px; }
+  .ing-head { display: flex; justify-content: space-between; align-items: center; }
+  .serv-stepper { display: inline-flex; align-items: center; gap: 8px; }
+  .serv-stepper .serv-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .serv-btn {
+    width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--line);
+    background: var(--card-2); color: var(--text); cursor: pointer; font-size: 1rem; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .serv-btn:hover:not(:disabled) { border-color: var(--accent-2); }
+  .serv-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .serv-count { min-width: 16px; text-align: center; font-weight: 700; }
+  .kcal { font-size: 0.82rem; color: var(--muted); }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  footer { text-align: center; padding: 30px 20px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); }
+
+  /* Add-to-list button on cards */
+  .add-btn {
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--line);
+    background: var(--card-2);
+    color: var(--accent);
+    padding: 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.15s ease;
+  }
+  .add-btn:hover { background: #2b303a; }
+  .add-btn.added { background: rgba(74,222,128,0.14); color: var(--accent); }
+  .add-btn.plan { color: var(--accent-2); }
+
+  /* Floating cart button */
+  .cart-fab {
+    position: fixed; right: 20px; bottom: 20px; z-index: 30;
+    background: var(--accent); color: #05210f; border: none;
+    padding: 14px 20px; border-radius: 999px; cursor: pointer;
+    font-size: 0.95rem; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .cart-fab .badge {
+    background: #05210f; color: var(--accent); border-radius: 999px;
+    min-width: 22px; height: 22px; padding: 0 6px; font-size: 0.8rem;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  /* Drawer */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 40;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100%; width: min(420px, 92vw);
+    background: var(--bg); border-left: 1px solid var(--line); z-index: 50;
+    transform: translateX(100%); transition: transform 0.25s ease;
+    display: flex; flex-direction: column;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head { padding: 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+  .drawer-head h2 { margin: 0; font-size: 1.2rem; }
+  .drawer-close { background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; }
+  .drawer-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+  .drawer-foot { padding: 16px 20px; border-top: 1px solid var(--line); display: flex; gap: 10px; }
+  .btn {
+    flex: 1; padding: 11px; border-radius: 10px; cursor: pointer; font-size: 0.9rem;
+    font-weight: 600; border: 1px solid var(--line); background: var(--card); color: var(--text);
+  }
+  .btn:hover { border-color: var(--accent-2); }
+  .btn.primary { background: var(--accent); color: #05210f; border-color: var(--accent); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .sel-recipes { margin-bottom: 18px; }
+  .sel-recipe { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .sel-recipe button { background: none; border: none; color: #f87171; cursor: pointer; font-size: 0.8rem; }
+  .sel-recipe .serv-note { color: var(--muted); font-size: 0.8rem; }
+  .ing-line { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 0.92rem; }
+  .ing-line input { width: 17px; height: 17px; accent-color: var(--accent); }
+  .ing-line label { cursor: pointer; }
+  .ing-line.checked label { text-decoration: line-through; color: var(--muted); }
+  .ing-count { color: var(--accent-2); font-size: 0.8rem; margin-left: 4px; }
+  .drawer-empty { color: var(--muted); text-align: center; padding: 40px 10px; }
+  .section-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 4px 0 6px; }
+  .copied-toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: var(--card-2); color: var(--text); border: 1px solid var(--line);
+    padding: 10px 18px; border-radius: 999px; z-index: 60; font-size: 0.9rem;
+    opacity: 0; transition: opacity 0.2s ease; pointer-events: none;
+  }
+  .copied-toast.show { opacity: 1; }
+
+  /* "Cook from ingredients" launcher */
+  .cook-launch {
+    width: 100%; margin-top: 4px; padding: 16px; border-radius: var(--radius);
+    border: 1px dashed var(--accent-2); background: rgba(56,189,248,0.06);
+    color: var(--text); cursor: pointer; font-size: 0.98rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s ease;
+  }
+  .cook-launch:hover { background: rgba(56,189,248,0.13); }
+  .cook-launch span.hint { font-weight: 400; color: var(--muted); }
+
+  /* Cook modal */
+  .modal {
+    position: fixed; inset: 0; z-index: 45; display: none;
+    background: rgba(0,0,0,0.6); padding: 20px; overflow-y: auto;
+  }
+  .modal.open { display: flex; align-items: flex-start; justify-content: center; }
+  .modal-card {
+    background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
+    width: min(920px, 100%); margin: auto; display: grid; grid-template-columns: 1fr 1fr;
+    max-height: calc(100vh - 40px); overflow: hidden;
+  }
+  @media (max-width: 720px) { .modal-card { grid-template-columns: 1fr; } }
+  .modal-col { display: flex; flex-direction: column; min-height: 0; }
+  .modal-col.pantry { border-right: 1px solid var(--line); }
+  @media (max-width: 720px) { .modal-col.pantry { border-right: none; border-bottom: 1px solid var(--line); max-height: 40vh; } }
+  .modal-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .modal-head h2 { margin: 0; font-size: 1.1rem; }
+  .modal-head p { margin: 2px 0 0; font-size: 0.82rem; color: var(--muted); }
+  .modal-close { background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; }
+  .modal-scroll { overflow-y: auto; padding: 14px 20px 20px; flex: 1; }
+
+  .search-box { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font-size: 0.9rem; margin-bottom: 12px; }
+  .search-box::placeholder { color: var(--muted); }
+  .pantry-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 0.9rem; }
+  .pantry-item input { width: 16px; height: 16px; accent-color: var(--accent-2); }
+  .pantry-item label { cursor: pointer; text-transform: capitalize; }
+  .pantry-actions { display: flex; gap: 10px; margin-bottom: 10px; }
+  .mini-btn { background: none; border: 1px solid var(--line); color: var(--accent-2); border-radius: 8px;
+    padding: 6px 10px; font-size: 0.8rem; cursor: pointer; }
+  .mini-btn:hover { border-color: var(--accent-2); }
+
+  .result { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: var(--card); }
+  .result.makeable { border-color: var(--accent); }
+  .result h4 { margin: 0 0 3px; font-size: 1rem; }
+  .result .match { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
+  .result .badge-make { color: var(--accent); font-weight: 600; }
+  .result .miss { color: #fbbf24; }
+  .have-bar { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; margin-bottom: 10px; }
+  .have-bar > span { display: block; height: 100%; background: var(--accent); }
+  .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .result-actions button { font-size: 0.8rem; padding: 6px 10px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card-2); color: var(--text); }
+  .result-actions button.go { background: var(--accent); color: #05210f; border-color: var(--accent); font-weight: 600; }
+  .result-detail { margin-top: 10px; font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 8px; display: none; }
+  .result-detail.open { display: block; }
+  .result-detail ul, .result-detail ol { margin: 4px 0; padding-left: 18px; }
+  .result-detail .missing-note { color: #fbbf24; }
+
+  /* Goal box */
+  .goal-box { margin-bottom: 22px; }
+  .goal-row { display: flex; gap: 10px; }
+  .goal-input {
+    flex: 1; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font-size: 0.95rem;
+  }
+  .goal-input:focus { outline: none; border-color: var(--accent-2); }
+  .goal-input::placeholder { color: var(--muted); }
+  .goal-go {
+    padding: 12px 20px; border-radius: 10px; border: none; cursor: pointer;
+    background: var(--accent); color: #05210f; font-weight: 700; font-size: 0.95rem; white-space: nowrap;
+  }
+  .goal-examples { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .goal-examples .lbl { font-size: 0.78rem; color: var(--muted); }
+  .goal-eg {
+    font-size: 0.78rem; background: var(--card); border: 1px solid var(--line); color: var(--muted);
+    border-radius: 999px; padding: 4px 10px; cursor: pointer;
+  }
+  .goal-eg:hover { border-color: var(--accent-2); color: var(--text); }
+  .goal-banner {
+    margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; display: none;
+    background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.35); font-size: 0.9rem;
+  }
+  .goal-banner.show { display: block; }
+  .goal-banner .clear-goal { background: none; border: none; color: var(--accent-2); cursor: pointer; font-size: 0.85rem; margin-left: 6px; }
+  .why { font-size: 0.75rem; color: var(--accent); margin: -8px 0 12px; padding: 0 18px; }
+
+  /* Guided step-by-step cooking */
+  .cook-plan { position: fixed; inset: 0; z-index: 70; background: var(--bg); display: none; flex-direction: column; }
+  .cook-plan.open { display: flex; }
+  .plan-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+  .plan-head h2 { margin: 0; font-size: 1.2rem; }
+  .plan-head .plan-sub { font-size: 0.82rem; color: var(--muted); }
+  .plan-body { flex: 1; overflow-y: auto; max-width: 680px; width: 100%; margin: 0 auto; padding: 24px 20px; }
+  .plan-progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-bottom: 22px; }
+  .plan-progress > span { display: block; height: 100%; background: var(--accent); transition: width 0.25s ease; }
+  .step-counter { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-2); margin-bottom: 10px; }
+  .step-text { font-size: 1.35rem; line-height: 1.5; }
+  .plan-ingredients { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 8px; }
+  .plan-ingredients h4 { margin: 0 0 8px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .plan-ingredients ul { margin: 0; padding-left: 18px; }
+  .plan-ingredients li { margin-bottom: 4px; }
+  .plan-done { text-align: center; padding: 20px; }
+  .plan-done .big { font-size: 3rem; }
+  .plan-foot { border-top: 1px solid var(--line); padding: 16px 20px; display: flex; gap: 12px; max-width: 680px; width: 100%; margin: 0 auto; }
+  .plan-foot button { flex: 1; padding: 14px; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 600; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  .plan-foot button.primary { background: var(--accent); color: #05210f; border-color: var(--accent); }
+  .plan-foot button:disabled { opacity: 0.35; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<header>
+  <div class="lang-switch" id="langSwitch">
+    <button class="lang-btn" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="nl">NL</button>
+    <button class="lang-btn" data-lang="de">DE</button>
+  </div>
+  <h1>🍳 Macro Kitchen</h1>
+  <p data-i18n="tagline">Pick your goal and your diet — we'll find the meal.</p>
+</header>
+
+<div class="wrap">
+  <div class="goal-box">
+    <div class="group-label" data-i18n="goalLabel">Tell us your goal</div>
+    <div class="goal-row">
+      <input type="text" class="goal-input" id="goalInput" data-i18n-ph="goalPh"
+        placeholder="e.g. build muscle with high-protein vegetarian meals, quick and light">
+      <button class="goal-go" id="goalGo" data-i18n="goalGo">Suggest meals</button>
+    </div>
+    <div class="goal-examples" id="goalExamples">
+      <span class="lbl" data-i18n="tryLabel">Try:</span>
+    </div>
+  </div>
+
+  <div class="goal-banner" id="goalBanner"></div>
+
+  <div class="controls">
+    <div>
+      <div class="group-label"><span data-i18n="macroNum">1</span> · <span data-i18n="macroFocus">Macro focus</span></div>
+      <div class="options" id="macroOpts">
+        <button class="chip blue" data-macro="protein"><span class="emoji">💪</span> <span data-i18n="moreProtein">More protein</span></button>
+        <button class="chip blue" data-macro="fat"><span class="emoji">🥑</span> <span data-i18n="moreFat">More fat</span></button>
+        <button class="chip blue" data-macro="carb"><span class="emoji">🍚</span> <span data-i18n="moreCarbs">More carbs</span></button>
+      </div>
+    </div>
+    <div>
+      <div class="group-label"><span data-i18n="dietNum">2</span> · <span data-i18n="dietWord">Diet</span></div>
+      <div class="options" id="dietOpts">
+        <button class="chip" data-diet="vegan"><span class="emoji">🌱</span> <span data-i18n="vegan">Vegan</span></button>
+        <button class="chip" data-diet="vegetarian"><span class="emoji">🧀</span> <span data-i18n="vegetarian">Vegetarian</span></button>
+        <button class="chip" data-diet="meat"><span class="emoji">🍗</span> <span data-i18n="meat">Meat</span></button>
+      </div>
+    </div>
+  </div>
+
+  <button class="cook-launch" id="cookLaunch">
+    🧑‍🍳 <span data-i18n="cookLaunch">What can I make?</span> <span class="hint" data-i18n="cookLaunchHint">— pick ingredients you have and build a meal</span>
+  </button>
+
+  <div class="meta">
+    <span id="count"></span>
+    <button class="clear" id="clearBtn" data-i18n="reset">Reset filters</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" data-i18n="empty" style="display:none">No recipes match yet — try loosening a filter.</div>
+</div>
+
+<footer data-i18n="footer">Macro Kitchen · a simple recipe finder · nutrition values are approximate per serving</footer>
+
+<button class="cart-fab" id="cartFab">🛒 <span data-i18n="groceryList">Grocery list</span> <span class="badge" id="cartBadge">0</span></button>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-label="Grocery list">
+  <div class="drawer-head">
+    <h2>🛒 <span data-i18n="groceryList">Grocery list</span></h2>
+    <button class="drawer-close" id="drawerClose" aria-label="Close">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot">
+    <button class="btn" id="copyBtn" data-i18n="copyList">Copy list</button>
+    <button class="btn primary" id="clearListBtn" data-i18n="clearAll">Clear all</button>
+  </div>
+</aside>
+<div class="copied-toast" id="toast" data-i18n="toast">Copied to clipboard ✓</div>
+
+<div class="modal" id="cookModal">
+  <div class="modal-card">
+    <div class="modal-col pantry">
+      <div class="modal-head">
+        <div>
+          <h2>🧺 <span data-i18n="yourIngredients">Your ingredients</span></h2>
+          <p data-i18n="tickHave">Tick what you have at home</p>
+        </div>
+        <button class="modal-close" id="cookClose" aria-label="Close">×</button>
+      </div>
+      <div class="modal-scroll">
+        <input type="text" class="search-box" id="pantrySearch" data-i18n-ph="searchPh" placeholder="Search ingredients…">
+        <div class="pantry-actions">
+          <button class="mini-btn" id="pantryClear" data-i18n="clearAll">Clear all</button>
+        </div>
+        <div id="pantryList"></div>
+      </div>
+    </div>
+    <div class="modal-col">
+      <div class="modal-head">
+        <div>
+          <h2>🍽️ <span data-i18n="mealsYouCanMake">Meals you can make</span></h2>
+          <p id="cookResultsSub"></p>
+        </div>
+      </div>
+      <div class="modal-scroll" id="cookResults"></div>
+    </div>
+  </div>
+</div>
+
+<div class="cook-plan" id="cookPlan">
+  <div class="plan-head">
+    <div>
+      <h2 id="planName">Recipe</h2>
+      <div class="plan-sub" id="planMeta"></div>
+    </div>
+    <button class="modal-close" id="planClose" aria-label="Close">×</button>
+  </div>
+  <div class="plan-body" id="planBody"></div>
+  <div class="plan-foot">
+    <button id="planBack" data-i18n="back">← Back</button>
+    <button class="primary" id="planNext" data-i18n="nextStep">Next step →</button>
+  </div>
+</div>
+
+<script>
+// ---- Recipe data -------------------------------------------------------
+// diet: vegan recipes also count as vegetarian. macro = the dominant focus.
+const RECIPES = [
+  {
+    name: "Grilled Lemon Herb Chicken", diet: "meat", macro: "protein",
+    serves: 2, time: "25 min", kcal: 410, p: 46, f: 18, c: 9,
+    ingredients: ["2 chicken breasts","2 tbsp olive oil","1 lemon (juice + zest)","2 cloves garlic, minced","1 tsp dried oregano","Salt & pepper"],
+    steps: ["Whisk oil, lemon, garlic, oregano, salt and pepper.","Coat chicken and marinate 10 min.","Grill 5–6 min per side until 74°C internal.","Rest 3 min, slice and serve."]
+  },
+  {
+    name: "Seared Salmon & Greens", diet: "meat", macro: "protein",
+    serves: 2, time: "20 min", kcal: 440, p: 40, f: 26, c: 6,
+    ingredients: ["2 salmon fillets","1 tbsp olive oil","Handful spinach","1 tbsp butter","1/2 lemon","Salt & pepper"],
+    steps: ["Pat salmon dry, season well.","Sear skin-side down 4 min, flip 3 min.","Wilt spinach in the pan with butter.","Squeeze lemon over and serve."]
+  },
+  {
+    name: "Beef & Broccoli Stir-Fry", diet: "meat", macro: "protein",
+    serves: 3, time: "25 min", kcal: 390, p: 38, f: 15, c: 22,
+    ingredients: ["400g lean beef strips","2 cups broccoli florets","3 tbsp soy sauce","1 tbsp cornstarch","1 tbsp ginger, grated","2 cloves garlic","1 tsp sesame oil"],
+    steps: ["Toss beef with cornstarch and 1 tbsp soy.","Sear beef hot and fast, remove.","Stir-fry broccoli, garlic, ginger 3 min.","Return beef, add remaining soy + sesame oil, toss."]
+  },
+  {
+    name: "Turkey Egg-White Scramble", diet: "meat", macro: "protein",
+    serves: 1, time: "12 min", kcal: 300, p: 42, f: 10, c: 6,
+    ingredients: ["100g ground turkey","5 egg whites","1/4 onion, diced","Handful cherry tomatoes","Salt, pepper, paprika"],
+    steps: ["Brown turkey with onion and paprika.","Add tomatoes, cook 2 min.","Pour in egg whites, scramble gently until set.","Season and serve."]
+  },
+  {
+    name: "Avocado Bacon Egg Bowl", diet: "meat", macro: "fat",
+    serves: 1, time: "15 min", kcal: 560, p: 24, f: 46, c: 10,
+    ingredients: ["1 avocado","3 rashers bacon","2 eggs","1 tsp olive oil","Chili flakes","Salt & pepper"],
+    steps: ["Crisp bacon in a pan, set aside.","Fry eggs in the bacon fat.","Slice avocado into a bowl.","Top with eggs, crumbled bacon, chili flakes."]
+  },
+  {
+    name: "Ribeye with Herb Butter", diet: "meat", macro: "fat",
+    serves: 2, time: "20 min", kcal: 620, p: 40, f: 50, c: 2,
+    ingredients: ["2 ribeye steaks","2 tbsp butter","2 sprigs thyme","2 cloves garlic","Salt & pepper"],
+    steps: ["Season steaks generously, rest to room temp.","Sear 3–4 min per side in a hot pan.","Add butter, thyme, garlic; baste 1 min.","Rest 5 min before slicing."]
+  },
+  {
+    name: "Loaded Sweet Potato & Chicken", diet: "meat", macro: "carb",
+    serves: 2, time: "45 min", kcal: 480, p: 32, f: 12, c: 58,
+    ingredients: ["2 large sweet potatoes","1 cooked chicken breast, shredded","1/4 cup corn","2 tbsp Greek yogurt","Chives","Salt & pepper"],
+    steps: ["Bake sweet potatoes at 200°C for 40 min.","Split open and fluff.","Top with chicken, corn, yogurt.","Finish with chives and pepper."]
+  },
+  {
+    name: "Chicken Teriyaki Rice Bowl", diet: "meat", macro: "carb",
+    serves: 2, time: "30 min", kcal: 520, p: 34, f: 10, c: 70,
+    ingredients: ["2 cups cooked rice","2 chicken thighs, diced","3 tbsp teriyaki sauce","1 carrot, julienned","2 spring onions","Sesame seeds"],
+    steps: ["Pan-fry chicken until golden.","Add teriyaki, glaze 2 min.","Serve over rice with carrot.","Top with spring onion and sesame."]
+  },
+  {
+    name: "Greek Yogurt Protein Bowl", diet: "vegetarian", macro: "protein",
+    serves: 1, time: "5 min", kcal: 330, p: 34, f: 8, c: 30,
+    ingredients: ["250g Greek yogurt (0%)","1 scoop whey (optional)","1/2 cup berries","1 tbsp honey","2 tbsp granola"],
+    steps: ["Stir whey into yogurt until smooth.","Top with berries and granola.","Drizzle honey and serve."]
+  },
+  {
+    name: "Cottage Cheese & Egg Toast", diet: "vegetarian", macro: "protein",
+    serves: 1, time: "10 min", kcal: 360, p: 32, f: 12, c: 30,
+    ingredients: ["150g cottage cheese","2 eggs","2 slices wholegrain bread","Chili flakes","Salt & pepper"],
+    steps: ["Boil or poach eggs to your liking.","Toast bread, spread cottage cheese.","Top with eggs, season, add chili flakes."]
+  },
+  {
+    name: "Halloumi & Chickpea Salad", diet: "vegetarian", macro: "protein",
+    serves: 2, time: "20 min", kcal: 430, p: 28, f: 24, c: 26,
+    ingredients: ["200g halloumi, sliced","1 can chickpeas, drained","Cucumber, diced","Cherry tomatoes","2 tbsp olive oil","1 tbsp lemon juice"],
+    steps: ["Pan-fry halloumi until golden both sides.","Toss chickpeas, cucumber, tomatoes with oil + lemon.","Top salad with halloumi and serve."]
+  },
+  {
+    name: "Cheesy Spinach Frittata", diet: "vegetarian", macro: "fat",
+    serves: 3, time: "30 min", kcal: 380, p: 22, f: 29, c: 6,
+    ingredients: ["6 eggs","1 cup grated cheddar","2 cups spinach","1/4 cup cream","1 tbsp butter","Salt & pepper"],
+    steps: ["Whisk eggs with cream, salt, pepper.","Wilt spinach in buttered oven-safe pan.","Pour eggs over, scatter cheese.","Bake at 180°C for 18 min until set."]
+  },
+  {
+    name: "Caprese Avocado Stack", diet: "vegetarian", macro: "fat",
+    serves: 2, time: "10 min", kcal: 470, p: 18, f: 38, c: 12,
+    ingredients: ["1 avocado","150g fresh mozzarella","2 tomatoes","Fresh basil","2 tbsp olive oil","Balsamic glaze"],
+    steps: ["Slice avocado, mozzarella and tomato.","Layer alternately with basil.","Drizzle olive oil and balsamic.","Season and serve."]
+  },
+  {
+    name: "Mushroom Cream Pasta", diet: "vegetarian", macro: "carb",
+    serves: 2, time: "25 min", kcal: 560, p: 16, f: 20, c: 78,
+    ingredients: ["200g pasta","2 cups mushrooms, sliced","1/2 cup cream","2 cloves garlic","1/4 cup parmesan","Parsley"],
+    steps: ["Cook pasta al dente, reserve some water.","Sauté mushrooms and garlic.","Add cream and parmesan, loosen with pasta water.","Toss pasta through, finish with parsley."]
+  },
+  {
+    name: "Margherita Flatbread", diet: "vegetarian", macro: "carb",
+    serves: 2, time: "20 min", kcal: 490, p: 18, f: 16, c: 68,
+    ingredients: ["2 flatbreads","1/2 cup passata","150g mozzarella","Fresh basil","1 tbsp olive oil"],
+    steps: ["Spread passata over flatbreads.","Add torn mozzarella.","Bake at 220°C for 10 min.","Top with basil and a drizzle of oil."]
+  },
+  {
+    name: "Tofu Scramble & Beans", diet: "vegan", macro: "protein",
+    serves: 2, time: "20 min", kcal: 340, p: 26, f: 14, c: 28,
+    ingredients: ["300g firm tofu, crumbled","1/2 tsp turmeric","1 can black beans","1/4 onion","1 tbsp nutritional yeast","Salt & pepper"],
+    steps: ["Sauté onion, add crumbled tofu and turmeric.","Stir in nutritional yeast, cook 5 min.","Warm beans through.","Season and serve."]
+  },
+  {
+    name: "Edamame Lentil Power Bowl", diet: "vegan", macro: "protein",
+    serves: 2, time: "25 min", kcal: 400, p: 28, f: 12, c: 46,
+    ingredients: ["1 cup cooked lentils","1 cup edamame","1 cup quinoa, cooked","1 carrot, grated","2 tbsp tahini","1 tbsp lemon juice"],
+    steps: ["Combine lentils, edamame, quinoa, carrot.","Whisk tahini with lemon and a splash of water.","Drizzle dressing over the bowl and toss."]
+  },
+  {
+    name: "Tempeh Peanut Stir-Fry", diet: "vegan", macro: "protein",
+    serves: 2, time: "25 min", kcal: 430, p: 27, f: 22, c: 30,
+    ingredients: ["200g tempeh, cubed","2 tbsp peanut butter","2 tbsp soy sauce","1 cup broccoli","1 red pepper","1 tsp ginger"],
+    steps: ["Pan-fry tempeh until browned.","Add veg and ginger, stir-fry 4 min.","Mix peanut butter + soy with water, pour in.","Toss to coat and serve."]
+  },
+  {
+    name: "Avocado Walnut Kale Salad", diet: "vegan", macro: "fat",
+    serves: 2, time: "15 min", kcal: 450, p: 12, f: 38, c: 22,
+    ingredients: ["1 avocado","1/2 cup walnuts","4 cups kale","2 tbsp olive oil","1 tbsp lemon juice","Salt"],
+    steps: ["Massage kale with oil, lemon and salt.","Slice avocado on top.","Scatter toasted walnuts and serve."]
+  },
+  {
+    name: "Coconut Chickpea Curry", diet: "vegan", macro: "fat",
+    serves: 3, time: "30 min", kcal: 480, p: 14, f: 30, c: 40,
+    ingredients: ["1 can chickpeas","1 can coconut milk","2 tbsp curry paste","1 onion","2 cups spinach","1 tbsp oil"],
+    steps: ["Sauté onion, stir in curry paste.","Add coconut milk and chickpeas, simmer 15 min.","Fold in spinach until wilted.","Serve with rice or naan."]
+  },
+  {
+    name: "Sweet Potato Black Bean Chili", diet: "vegan", macro: "carb",
+    serves: 4, time: "40 min", kcal: 420, p: 15, f: 8, c: 74,
+    ingredients: ["2 sweet potatoes, cubed","1 can black beans","1 can chopped tomatoes","1 onion","2 tbsp chili powder","1 cup corn"],
+    steps: ["Sauté onion, add chili powder.","Add sweet potato, tomatoes and 1 cup water.","Simmer 20 min until tender.","Stir in beans and corn, heat through."]
+  },
+  {
+    name: "Teriyaki Veg Noodles", diet: "vegan", macro: "carb",
+    serves: 2, time: "20 min", kcal: 500, p: 14, f: 10, c: 86,
+    ingredients: ["200g noodles","3 tbsp teriyaki sauce","1 cup mixed veg","2 spring onions","1 tsp sesame oil","Sesame seeds"],
+    steps: ["Cook noodles, drain.","Stir-fry mixed veg 3 min.","Add noodles + teriyaki, toss.","Finish with sesame oil, seeds, spring onion."]
+  }
+];
+
+// ---- Dutch & German translations of every recipe (aligned to RECIPES) ---
+const RECIPE_I18N = [
+  { nl:{name:"Gegrilde Kip met Citroen en Kruiden",ingredients:["2 kipfilets","2 el olijfolie","1 citroen (sap + rasp)","2 teentjes knoflook, gehakt","1 tl gedroogde oregano","Zout & peper"],steps:["Klop olie, citroen, knoflook, oregano, zout en peper door elkaar.","Bestrijk de kip en marineer 10 min.","Grill 5–6 min per kant tot 74°C van binnen.","Laat 3 min rusten, snijd en serveer."]},
+    de:{name:"Gegrilltes Zitronen-Kräuter-Hähnchen",ingredients:["2 Hähnchenbrüste","2 EL Olivenöl","1 Zitrone (Saft + Abrieb)","2 Zehen Knoblauch, gehackt","1 TL getrockneter Oregano","Salz & Pfeffer"],steps:["Öl, Zitrone, Knoblauch, Oregano, Salz und Pfeffer verrühren.","Hähnchen bestreichen und 10 Min. marinieren.","5–6 Min. pro Seite grillen, bis innen 74°C.","3 Min. ruhen lassen, schneiden und servieren."]} },
+  { nl:{name:"Gebakken Zalm met Groenten",ingredients:["2 zalmfilets","1 el olijfolie","Handvol spinazie","1 el boter","1/2 citroen","Zout & peper"],steps:["Dep de zalm droog, kruid goed.","Bak 4 min op de velkant, keer 3 min.","Laat spinazie in de pan slinken met boter.","Knijp er citroen over en serveer."]},
+    de:{name:"Gebratener Lachs mit Blattgemüse",ingredients:["2 Lachsfilets","1 EL Olivenöl","Handvoll Spinat","1 EL Butter","1/2 Zitrone","Salz & Pfeffer"],steps:["Lachs trocken tupfen, gut würzen.","4 Min. auf der Hautseite braten, 3 Min. wenden.","Spinat mit Butter in der Pfanne zusammenfallen lassen.","Mit Zitrone beträufeln und servieren."]} },
+  { nl:{name:"Roerbak Rundvlees met Broccoli",ingredients:["400g magere rundvleesreepjes","2 kop broccoliroosjes","3 el sojasaus","1 el maïzena","1 el gember, geraspt","2 teentjes knoflook","1 tl sesamolie"],steps:["Meng rundvlees met maïzena en 1 el soja.","Bak het vlees heet en snel, haal eruit.","Roerbak broccoli, knoflook, gember 3 min.","Voeg vlees terug, rest soja + sesamolie erbij, roerbak."]},
+    de:{name:"Rindfleisch-Brokkoli-Pfanne",ingredients:["400g magere Rindfleischstreifen","2 Tasse Brokkoliröschen","3 EL Sojasauce","1 EL Speisestärke","1 EL Ingwer, gerieben","2 Zehen Knoblauch","1 TL Sesamöl"],steps:["Rindfleisch mit Speisestärke und 1 EL Soja vermengen.","Fleisch heiß und schnell anbraten, herausnehmen.","Brokkoli, Knoblauch, Ingwer 3 Min. braten.","Fleisch zurückgeben, restliche Soja + Sesamöl dazu, schwenken."]} },
+  { nl:{name:"Roerei van Eiwit met Kalkoen",ingredients:["100g kalkoengehakt","5 eiwitten","1/4 ui, gesnipperd","Handvol kerstomaatjes","Zout, peper, paprika"],steps:["Bak kalkoen met ui en paprika bruin.","Voeg tomaatjes toe, bak 2 min.","Giet eiwitten erbij, roer zachtjes tot gestold.","Kruid en serveer."]},
+    de:{name:"Eiweiß-Rührei mit Pute",ingredients:["100g Putenhackfleisch","5 Eiweiß","1/4 Zwiebel, gewürfelt","Handvoll Kirschtomaten","Salz, Pfeffer, Paprika"],steps:["Pute mit Zwiebel und Paprika anbraten.","Tomaten dazugeben, 2 Min. braten.","Eiweiß angießen, sanft rühren bis fest.","Würzen und servieren."]} },
+  { nl:{name:"Avocado-Spek-Ei Bowl",ingredients:["1 avocado","3 plakjes spek","2 eieren","1 tl olijfolie","Chilivlokken","Zout & peper"],steps:["Bak het spek knapperig, leg apart.","Bak de eieren in het spekvet.","Snijd avocado in een kom.","Beleg met eieren, verkruimeld spek en chilivlokken."]},
+    de:{name:"Avocado-Speck-Ei-Bowl",ingredients:["1 Avocado","3 Scheiben Speck","2 Eier","1 TL Olivenöl","Chiliflocken","Salz & Pfeffer"],steps:["Speck knusprig braten, beiseitelegen.","Eier im Speckfett braten.","Avocado in eine Schüssel schneiden.","Mit Eiern, zerbröseltem Speck und Chiliflocken belegen."]} },
+  { nl:{name:"Ribeye met Kruidenboter",ingredients:["2 ribeye steaks","2 el boter","2 takjes tijm","2 teentjes knoflook","Zout & peper"],steps:["Kruid de steaks royaal, laat op kamertemperatuur komen.","Bak 3–4 min per kant in een hete pan.","Voeg boter, tijm, knoflook toe; bedruip 1 min.","Laat 5 min rusten voor het snijden."]},
+    de:{name:"Ribeye mit Kräuterbutter",ingredients:["2 Ribeye-Steaks","2 EL Butter","2 Zweige Thymian","2 Zehen Knoblauch","Salz & Pfeffer"],steps:["Steaks großzügig würzen, auf Zimmertemperatur bringen.","3–4 Min. pro Seite in heißer Pfanne braten.","Butter, Thymian, Knoblauch dazu; 1 Min. begießen.","Vor dem Schneiden 5 Min. ruhen lassen."]} },
+  { nl:{name:"Gevulde Zoete Aardappel met Kip",ingredients:["2 grote zoete aardappels","1 gekookte kipfilet, geplukt","1/4 kop maïs","2 el Griekse yoghurt","Bieslook","Zout & peper"],steps:["Bak zoete aardappels 40 min op 200°C.","Snijd open en maak los met een vork.","Beleg met kip, maïs, yoghurt.","Werk af met bieslook en peper."]},
+    de:{name:"Gefüllte Süßkartoffel mit Hähnchen",ingredients:["2 große Süßkartoffeln","1 gekochte Hähnchenbrust, zerpflückt","1/4 Tasse Mais","2 EL griechischer Joghurt","Schnittlauch","Salz & Pfeffer"],steps:["Süßkartoffeln 40 Min. bei 200°C backen.","Aufschneiden und auflockern.","Mit Hähnchen, Mais, Joghurt belegen.","Mit Schnittlauch und Pfeffer abschließen."]} },
+  { nl:{name:"Kip Teriyaki Rijstbowl",ingredients:["2 kop gekookte rijst","2 kippendijen, in blokjes","3 el teriyakisaus","1 wortel, in reepjes","2 lente-uitjes","Sesamzaad"],steps:["Bak de kip goudbruin.","Voeg teriyaki toe, glaceer 2 min.","Serveer op rijst met wortel.","Bestrooi met lente-ui en sesam."]},
+    de:{name:"Hähnchen-Teriyaki-Reisschale",ingredients:["2 Tasse gekochter Reis","2 Hähnchenschenkel, gewürfelt","3 EL Teriyakisauce","1 Karotte, in Streifen","2 Frühlingszwiebeln","Sesam"],steps:["Hähnchen goldbraun braten.","Teriyaki dazu, 2 Min. glasieren.","Auf Reis mit Karotte servieren.","Mit Frühlingszwiebel und Sesam bestreuen."]} },
+  { nl:{name:"Griekse Yoghurt Eiwitbowl",ingredients:["250g Griekse yoghurt (0%)","1 schep whey (optioneel)","1/2 kop bessen","1 el honing","2 el granola"],steps:["Roer whey door de yoghurt tot glad.","Beleg met bessen en granola.","Besprenkel met honing en serveer."]},
+    de:{name:"Griechischer Joghurt Protein-Bowl",ingredients:["250g griechischer Joghurt (0%)","1 Portion Whey (optional)","1/2 Tasse Beeren","1 EL Honig","2 EL Granola"],steps:["Whey glatt unter den Joghurt rühren.","Mit Beeren und Granola belegen.","Mit Honig beträufeln und servieren."]} },
+  { nl:{name:"Cottage Cheese met Ei op Toast",ingredients:["150g cottage cheese","2 eieren","2 sneetjes volkorenbrood","Chilivlokken","Zout & peper"],steps:["Kook of pocheer de eieren naar wens.","Rooster het brood, besmeer met cottage cheese.","Beleg met eieren, kruid, voeg chilivlokken toe."]},
+    de:{name:"Hüttenkäse mit Ei auf Toast",ingredients:["150g Hüttenkäse","2 Eier","2 Scheiben Vollkornbrot","Chiliflocken","Salz & Pfeffer"],steps:["Eier nach Geschmack kochen oder pochieren.","Brot toasten, mit Hüttenkäse bestreichen.","Mit Eiern belegen, würzen, Chiliflocken dazu."]} },
+  { nl:{name:"Halloumi-Kikkererwtensalade",ingredients:["200g halloumi, in plakjes","1 blik kikkererwten, uitgelekt","Komkommer, in blokjes","Kerstomaatjes","2 el olijfolie","1 el citroensap"],steps:["Bak halloumi aan beide kanten goudbruin.","Meng kikkererwten, komkommer, tomaatjes met olie + citroen.","Beleg de salade met halloumi en serveer."]},
+    de:{name:"Halloumi-Kichererbsen-Salat",ingredients:["200g Halloumi, in Scheiben","1 Dose Kichererbsen, abgetropft","Gurke, gewürfelt","Kirschtomaten","2 EL Olivenöl","1 EL Zitronensaft"],steps:["Halloumi beidseitig goldbraun braten.","Kichererbsen, Gurke, Tomaten mit Öl + Zitrone mischen.","Salat mit Halloumi belegen und servieren."]} },
+  { nl:{name:"Frittata met Spinazie en Kaas",ingredients:["6 eieren","1 kop geraspte cheddar","2 kop spinazie","1/4 kop room","1 el boter","Zout & peper"],steps:["Klop eieren met room, zout, peper.","Laat spinazie slinken in een ovenvaste pan met boter.","Giet de eieren erover, strooi kaas erop.","Bak 18 min op 180°C tot gestold."]},
+    de:{name:"Käse-Spinat-Frittata",ingredients:["6 Eier","1 Tasse geriebener Cheddar","2 Tasse Spinat","1/4 Tasse Sahne","1 EL Butter","Salz & Pfeffer"],steps:["Eier mit Sahne, Salz, Pfeffer verquirlen.","Spinat in ofenfester Pfanne mit Butter zusammenfallen lassen.","Eier darübergießen, Käse verteilen.","18 Min. bei 180°C backen, bis fest."]} },
+  { nl:{name:"Caprese-Avocado Torentje",ingredients:["1 avocado","150g verse mozzarella","2 tomaten","Verse basilicum","2 el olijfolie","Balsamicostroop"],steps:["Snijd avocado, mozzarella en tomaat.","Stapel afwisselend met basilicum.","Besprenkel met olijfolie en balsamico.","Kruid en serveer."]},
+    de:{name:"Caprese-Avocado-Türmchen",ingredients:["1 Avocado","150g frischer Mozzarella","2 Tomaten","Frisches Basilikum","2 EL Olivenöl","Balsamico-Creme"],steps:["Avocado, Mozzarella und Tomate schneiden.","Abwechselnd mit Basilikum schichten.","Mit Olivenöl und Balsamico beträufeln.","Würzen und servieren."]} },
+  { nl:{name:"Romige Champignonpasta",ingredients:["200g pasta","2 kop champignons, in plakjes","1/2 kop room","2 teentjes knoflook","1/4 kop parmezaan","Peterselie"],steps:["Kook pasta beetgaar, bewaar wat water.","Bak champignons en knoflook.","Voeg room en parmezaan toe, verdun met pastawater.","Schep de pasta erdoor, werk af met peterselie."]},
+    de:{name:"Cremige Champignon-Pasta",ingredients:["200g Pasta","2 Tasse Champignons, in Scheiben","1/2 Tasse Sahne","2 Zehen Knoblauch","1/4 Tasse Parmesan","Petersilie"],steps:["Pasta al dente kochen, etwas Wasser aufheben.","Champignons und Knoblauch anbraten.","Sahne und Parmesan dazu, mit Pastawasser lösen.","Pasta unterheben, mit Petersilie abschließen."]} },
+  { nl:{name:"Margherita Platbrood",ingredients:["2 platbroden","1/2 kop passata","150g mozzarella","Verse basilicum","1 el olijfolie"],steps:["Verdeel passata over de platbroden.","Beleg met gescheurde mozzarella.","Bak 10 min op 220°C.","Beleg met basilicum en een scheutje olie."]},
+    de:{name:"Margherita-Fladenbrot",ingredients:["2 Fladenbrote","1/2 Tasse Passata","150g Mozzarella","Frisches Basilikum","1 EL Olivenöl"],steps:["Passata auf den Fladenbroten verteilen.","Mit gezupftem Mozzarella belegen.","10 Min. bei 220°C backen.","Mit Basilikum und einem Schuss Öl belegen."]} },
+  { nl:{name:"Tofu-Roerei met Bonen",ingredients:["300g stevige tofu, verkruimeld","1/2 tl kurkuma","1 blik zwarte bonen","1/4 ui","1 el edelgistvlokken","Zout & peper"],steps:["Bak ui, voeg verkruimelde tofu en kurkuma toe.","Roer edelgistvlokken erdoor, bak 5 min.","Warm de bonen mee.","Kruid en serveer."]},
+    de:{name:"Tofu-Rührei mit Bohnen",ingredients:["300g fester Tofu, zerbröselt","1/2 TL Kurkuma","1 Dose schwarze Bohnen","1/4 Zwiebel","1 EL Hefeflocken","Salz & Pfeffer"],steps:["Zwiebel anbraten, zerbröselten Tofu und Kurkuma dazu.","Hefeflocken unterrühren, 5 Min. braten.","Bohnen mit erwärmen.","Würzen und servieren."]} },
+  { nl:{name:"Edamame-Linzen Powerbowl",ingredients:["1 kop gekookte linzen","1 kop edamame","1 kop gekookte quinoa","1 wortel, geraspt","2 el tahin","1 el citroensap"],steps:["Meng linzen, edamame, quinoa, wortel.","Klop tahin met citroen en een scheutje water.","Sprenkel de dressing over de bowl en schep om."]},
+    de:{name:"Edamame-Linsen-Power-Bowl",ingredients:["1 Tasse gekochte Linsen","1 Tasse Edamame","1 Tasse gekochte Quinoa","1 Karotte, gerieben","2 EL Tahin","1 EL Zitronensaft"],steps:["Linsen, Edamame, Quinoa, Karotte mischen.","Tahin mit Zitrone und einem Schuss Wasser verrühren.","Dressing über die Bowl geben und schwenken."]} },
+  { nl:{name:"Tempeh-Pinda Roerbak",ingredients:["200g tempeh, in blokjes","2 el pindakaas","2 el sojasaus","1 kop broccoli","1 rode paprika","1 tl gember"],steps:["Bak tempeh goudbruin.","Voeg groente en gember toe, roerbak 4 min.","Meng pindakaas + soja met water, giet erbij.","Schep om tot alles bedekt is en serveer."]},
+    de:{name:"Tempeh-Erdnuss-Pfanne",ingredients:["200g Tempeh, gewürfelt","2 EL Erdnussbutter","2 EL Sojasauce","1 Tasse Brokkoli","1 rote Paprika","1 TL Ingwer"],steps:["Tempeh goldbraun braten.","Gemüse und Ingwer dazu, 4 Min. braten.","Erdnussbutter + Soja mit Wasser mischen, angießen.","Schwenken bis alles bedeckt ist und servieren."]} },
+  { nl:{name:"Avocado-Walnoot Boerenkoolsalade",ingredients:["1 avocado","1/2 kop walnoten","4 kop boerenkool","2 el olijfolie","1 el citroensap","Zout"],steps:["Masseer boerenkool met olie, citroen en zout.","Leg avocado erbovenop.","Strooi geroosterde walnoten erover en serveer."]},
+    de:{name:"Avocado-Walnuss-Grünkohl-Salat",ingredients:["1 Avocado","1/2 Tasse Walnüsse","4 Tasse Grünkohl","2 EL Olivenöl","1 EL Zitronensaft","Salz"],steps:["Grünkohl mit Öl, Zitrone und Salz einmassieren.","Avocado darauflegen.","Geröstete Walnüsse darüberstreuen und servieren."]} },
+  { nl:{name:"Kokos-Kikkererwtencurry",ingredients:["1 blik kikkererwten","1 blik kokosmelk","2 el currypasta","1 ui","2 kop spinazie","1 el olie"],steps:["Bak ui, roer currypasta erdoor.","Voeg kokosmelk en kikkererwten toe, sudder 15 min.","Roer spinazie erdoor tot geslonken.","Serveer met rijst of naan."]},
+    de:{name:"Kokos-Kichererbsen-Curry",ingredients:["1 Dose Kichererbsen","1 Dose Kokosmilch","2 EL Currypaste","1 Zwiebel","2 Tasse Spinat","1 EL Öl"],steps:["Zwiebel anbraten, Currypaste einrühren.","Kokosmilch und Kichererbsen dazu, 15 Min. köcheln.","Spinat unterrühren, bis zusammengefallen.","Mit Reis oder Naan servieren."]} },
+  { nl:{name:"Zoete Aardappel-Zwarte Bonen Chili",ingredients:["2 zoete aardappels, in blokjes","1 blik zwarte bonen","1 blik gehakte tomaten","1 ui","2 el chilipoeder","1 kop maïs"],steps:["Bak ui, voeg chilipoeder toe.","Voeg zoete aardappel, tomaten en 1 kop water toe.","Sudder 20 min tot zacht.","Roer bonen en maïs erdoor, warm door."]},
+    de:{name:"Süßkartoffel-Bohnen-Chili",ingredients:["2 Süßkartoffeln, gewürfelt","1 Dose schwarze Bohnen","1 Dose gehackte Tomaten","1 Zwiebel","2 EL Chilipulver","1 Tasse Mais"],steps:["Zwiebel anbraten, Chilipulver dazu.","Süßkartoffel, Tomaten und 1 Tasse Wasser dazugeben.","20 Min. köcheln, bis weich.","Bohnen und Mais unterrühren, durchwärmen."]} },
+  { nl:{name:"Teriyaki Groentenoedels",ingredients:["200g noedels","3 el teriyakisaus","1 kop gemengde groente","2 lente-uitjes","1 tl sesamolie","Sesamzaad"],steps:["Kook de noedels, giet af.","Roerbak gemengde groente 3 min.","Voeg noedels + teriyaki toe, schep om.","Werk af met sesamolie, zaad en lente-ui."]},
+    de:{name:"Teriyaki-Gemüsenudeln",ingredients:["200g Nudeln","3 EL Teriyakisauce","1 Tasse gemischtes Gemüse","2 Frühlingszwiebeln","1 TL Sesamöl","Sesam"],steps:["Nudeln kochen, abgießen.","Gemischtes Gemüse 3 Min. braten.","Nudeln + Teriyaki dazu, schwenken.","Mit Sesamöl, Sesam und Frühlingszwiebel abschließen."]} }
+];
+
+// ---- UI string translations -------------------------------------------
+const I18N = {
+  en: {
+    tagline:"Pick your goal and your diet — we'll find the meal.", goalLabel:"Tell us your goal",
+    goalPh:"e.g. build muscle with high-protein vegetarian meals, quick and light", goalGo:"Suggest meals", tryLabel:"Try:",
+    macroNum:"1", macroFocus:"Macro focus", dietNum:"2", dietWord:"Diet",
+    moreProtein:"More protein", moreFat:"More fat", moreCarbs:"More carbs",
+    vegan:"Vegan", vegetarian:"Vegetarian", meat:"Meat",
+    cookLaunch:"What can I make?", cookLaunchHint:"— pick ingredients you have and build a meal",
+    reset:"Reset filters", empty:"No recipes match yet — try loosening a filter.",
+    footer:"Macro Kitchen · a simple recipe finder · nutrition values are approximate per serving",
+    groceryList:"Grocery list", copyList:"Copy list", clearAll:"Clear all", toast:"Copied to clipboard ✓",
+    yourIngredients:"Your ingredients", tickHave:"Tick what you have at home", searchPh:"Search ingredients…",
+    mealsYouCanMake:"Meals you can make", back:"← Back", nextStep:"Next step →",
+    recipeWord:["recipe","recipes"], itemWord:["item","items"], servingWord:["serving","servings"],
+    macroTag:{protein:"High protein",fat:"High fat",carb:"High carb"},
+    dietTag:{vegan:"Vegan",vegetarian:"Vegetarian",meat:"Meat"},
+    viewRecipe:"View recipe →", servingsLabel:"Servings", cookStep:"👩‍🍳 Cook step-by-step",
+    addToList:"+ Add to grocery list", addedToList:"✓ Added to list", ingredientsH:"Ingredients", methodH:"Method",
+    pickToSee:"Pick some ingredients to see meals",
+    mealsMakeNow:"{n} meals you can make right now", mealMakeNow:"{n} meal you can make right now",
+    closeMatches:"{n} close matches", closeMatch:"{n} close match", youCanMake:"✓ You can make this!",
+    haveWord:"Have", missWord:"missing", viewRecipeBtn:"View recipe", inList:"✓ In grocery list", stillNeed:"Still need: {list}",
+    emptyList:"Your grocery list is empty. Add recipes to build a shopping list.",
+    itemsToBuy:["item to buy","items to buy"], remove:"Remove", copyHeader:"Grocery list — Macro Kitchen",
+    goalFor:"Suggestions for:", showing:"showing", bestFirst:"best matches first.", clearWord:"clear",
+    nProtein:"high protein", nFat:"higher fat / low-carb", nCarb:"carb-focused", nLighter:"lighter meals",
+    nHearty:"hearty meals", nQuick:"quick to make", nVegan:"vegan", nVegetarian:"vegetarian", nMeat:"meat", bestOverall:"best overall matches",
+    rProtein:"{g}g protein", rCarbs:"{g}g carbs", rFat:"{g}g fat", rKcal:"{k} kcal", rUses:"uses {list}",
+    beforeStart:"Before you start", getReady:"Get these ready", stepOf:"Step {a} of {b}",
+    readyTitle:"{name} is ready!", enjoy:"Enjoy your meal.", startCooking:"Start cooking →", finish:"Finish →", doneClose:"Done — close",
+    examples:["lose weight, light and quick","build muscle, high protein","keto low-carb vegetarian","carb-load for a long run","quick vegan dinner"]
+  },
+  nl: {
+    tagline:"Kies je doel en je dieet — wij vinden het gerecht.", goalLabel:"Vertel ons je doel",
+    goalPh:"bijv. spieropbouw met eiwitrijke vegetarische maaltijden, snel en licht", goalGo:"Toon gerechten", tryLabel:"Probeer:",
+    macroNum:"1", macroFocus:"Macrofocus", dietNum:"2", dietWord:"Dieet",
+    moreProtein:"Meer eiwit", moreFat:"Meer vet", moreCarbs:"Meer koolhydraten",
+    vegan:"Veganistisch", vegetarian:"Vegetarisch", meat:"Vlees",
+    cookLaunch:"Wat kan ik maken?", cookLaunchHint:"— kies ingrediënten die je hebt en stel een maaltijd samen",
+    reset:"Filters wissen", empty:"Nog geen gerechten gevonden — probeer een filter losser te zetten.",
+    footer:"Macro Kitchen · een eenvoudige receptenzoeker · voedingswaarden zijn bij benadering per portie",
+    groceryList:"Boodschappenlijst", copyList:"Lijst kopiëren", clearAll:"Alles wissen", toast:"Gekopieerd naar klembord ✓",
+    yourIngredients:"Jouw ingrediënten", tickHave:"Vink aan wat je in huis hebt", searchPh:"Zoek ingrediënten…",
+    mealsYouCanMake:"Maaltijden die je kunt maken", back:"← Terug", nextStep:"Volgende stap →",
+    recipeWord:["recept","recepten"], itemWord:["item","items"], servingWord:["portie","porties"],
+    macroTag:{protein:"Veel eiwit",fat:"Veel vet",carb:"Veel koolhydraten"},
+    dietTag:{vegan:"Veganistisch",vegetarian:"Vegetarisch",meat:"Vlees"},
+    viewRecipe:"Bekijk recept →", servingsLabel:"Porties", cookStep:"👩‍🍳 Stap voor stap koken",
+    addToList:"+ Aan boodschappenlijst", addedToList:"✓ Toegevoegd", ingredientsH:"Ingrediënten", methodH:"Bereiding",
+    pickToSee:"Kies ingrediënten om maaltijden te zien",
+    mealsMakeNow:"{n} maaltijden die je nu kunt maken", mealMakeNow:"{n} maaltijd die je nu kunt maken",
+    closeMatches:"{n} bijna-matches", closeMatch:"{n} bijna-match", youCanMake:"✓ Dit kun je maken!",
+    haveWord:"Hebt", missWord:"mist", viewRecipeBtn:"Bekijk recept", inList:"✓ Op de lijst", stillNeed:"Nog nodig: {list}",
+    emptyList:"Je boodschappenlijst is leeg. Voeg recepten toe om een lijst te maken.",
+    itemsToBuy:["artikel te kopen","artikelen te kopen"], remove:"Verwijder", copyHeader:"Boodschappenlijst — Macro Kitchen",
+    goalFor:"Suggesties voor:", showing:"toont", bestFirst:"beste matches eerst.", clearWord:"wissen",
+    nProtein:"veel eiwit", nFat:"meer vet / weinig koolhydraten", nCarb:"koolhydraatrijk", nLighter:"lichtere maaltijden",
+    nHearty:"stevige maaltijden", nQuick:"snel te maken", nVegan:"veganistisch", nVegetarian:"vegetarisch", nMeat:"vlees", bestOverall:"beste algemene matches",
+    rProtein:"{g}g eiwit", rCarbs:"{g}g koolhydraten", rFat:"{g}g vet", rKcal:"{k} kcal", rUses:"gebruikt {list}",
+    beforeStart:"Voordat je begint", getReady:"Leg dit klaar", stepOf:"Stap {a} van {b}",
+    readyTitle:"{name} is klaar!", enjoy:"Eet smakelijk.", startCooking:"Begin met koken →", finish:"Afronden →", doneClose:"Klaar — sluiten",
+    examples:["afvallen, licht en snel","spieropbouw, veel eiwit","keto koolhydraatarm vegetarisch","koolhydraten laden voor een lange run","snel veganistisch diner"]
+  },
+  de: {
+    tagline:"Wähle dein Ziel und deine Ernährung — wir finden das Gericht.", goalLabel:"Nenne uns dein Ziel",
+    goalPh:"z.B. Muskelaufbau mit eiweißreichen vegetarischen Gerichten, schnell und leicht", goalGo:"Gerichte vorschlagen", tryLabel:"Versuche:",
+    macroNum:"1", macroFocus:"Makro-Fokus", dietNum:"2", dietWord:"Ernährung",
+    moreProtein:"Mehr Protein", moreFat:"Mehr Fett", moreCarbs:"Mehr Kohlenhydrate",
+    vegan:"Vegan", vegetarian:"Vegetarisch", meat:"Fleisch",
+    cookLaunch:"Was kann ich kochen?", cookLaunchHint:"— wähle vorhandene Zutaten und stelle ein Gericht zusammen",
+    reset:"Filter zurücksetzen", empty:"Noch keine Treffer — lockere einen Filter.",
+    footer:"Macro Kitchen · eine einfache Rezeptsuche · Nährwerte sind ungefähr pro Portion",
+    groceryList:"Einkaufsliste", copyList:"Liste kopieren", clearAll:"Alles löschen", toast:"In die Zwischenablage kopiert ✓",
+    yourIngredients:"Deine Zutaten", tickHave:"Hake ab, was du zu Hause hast", searchPh:"Zutaten suchen…",
+    mealsYouCanMake:"Gerichte, die du kochen kannst", back:"← Zurück", nextStep:"Nächster Schritt →",
+    recipeWord:["Rezept","Rezepte"], itemWord:["Artikel","Artikel"], servingWord:["Portion","Portionen"],
+    macroTag:{protein:"Viel Protein",fat:"Viel Fett",carb:"Viele Kohlenhydrate"},
+    dietTag:{vegan:"Vegan",vegetarian:"Vegetarisch",meat:"Fleisch"},
+    viewRecipe:"Rezept ansehen →", servingsLabel:"Portionen", cookStep:"👩‍🍳 Schritt für Schritt kochen",
+    addToList:"+ Zur Einkaufsliste", addedToList:"✓ Hinzugefügt", ingredientsH:"Zutaten", methodH:"Zubereitung",
+    pickToSee:"Wähle Zutaten, um Gerichte zu sehen",
+    mealsMakeNow:"{n} Gerichte, die du jetzt kochen kannst", mealMakeNow:"{n} Gericht, das du jetzt kochen kannst",
+    closeMatches:"{n} fast passende", closeMatch:"{n} fast passendes", youCanMake:"✓ Das kannst du kochen!",
+    haveWord:"Hast", missWord:"fehlt", viewRecipeBtn:"Rezept ansehen", inList:"✓ Auf der Liste", stillNeed:"Fehlt noch: {list}",
+    emptyList:"Deine Einkaufsliste ist leer. Füge Rezepte hinzu, um eine Liste zu erstellen.",
+    itemsToBuy:["Artikel zu kaufen","Artikel zu kaufen"], remove:"Entfernen", copyHeader:"Einkaufsliste — Macro Kitchen",
+    goalFor:"Vorschläge für:", showing:"zeigt", bestFirst:"beste Treffer zuerst.", clearWord:"löschen",
+    nProtein:"viel Protein", nFat:"mehr Fett / wenig Kohlenhydrate", nCarb:"kohlenhydratreich", nLighter:"leichtere Gerichte",
+    nHearty:"herzhafte Gerichte", nQuick:"schnell gemacht", nVegan:"vegan", nVegetarian:"vegetarisch", nMeat:"Fleisch", bestOverall:"beste Gesamttreffer",
+    rProtein:"{g}g Protein", rCarbs:"{g}g Kohlenhydrate", rFat:"{g}g Fett", rKcal:"{k} kcal", rUses:"nutzt {list}",
+    beforeStart:"Bevor du beginnst", getReady:"Lege das bereit", stepOf:"Schritt {a} von {b}",
+    readyTitle:"{name} ist fertig!", enjoy:"Guten Appetit.", startCooking:"Los kochen →", finish:"Abschließen →", doneClose:"Fertig — schließen",
+    examples:["abnehmen, leicht und schnell","Muskelaufbau, viel Protein","keto kohlenhydratarm vegetarisch","Kohlenhydrate laden für einen langen Lauf","schnelles veganes Abendessen"]
+  }
+};
+
+// Localized accessors for a recipe by id
+function locName(id) { return LANG === 'en' ? RECIPES[id].name : RECIPE_I18N[id][LANG].name; }
+function locIngredients(id) { return LANG === 'en' ? RECIPES[id].ingredients : RECIPE_I18N[id][LANG].ingredients; }
+function locSteps(id) { return LANG === 'en' ? RECIPES[id].steps : RECIPE_I18N[id][LANG].steps; }
+function locTime(r) { return r.time.replace('min', LANG === 'de' ? 'Min.' : 'min'); }
+
+function t(k) { const v = I18N[LANG] && I18N[LANG][k]; return v != null ? v : I18N.en[k]; }
+function fmt(k, p) { return t(k).replace(/{(\w+)}/g, (_, x) => p[x]); }
+function plural(n, k) { const arr = t(k); return n + ' ' + arr[n === 1 ? 0 : 1]; }
+
+// ---- State + rendering -------------------------------------------------
+let LANG  = 'en';   // 'en' | 'nl' | 'de'
+let macro = null;   // 'protein' | 'fat' | 'carb'
+let diet  = null;   // 'vegan' | 'vegetarian' | 'meat'
+let goal  = null;   // parsed goal object when the user describes what they want
+const selected = new Set();   // recipe indices added to the grocery list
+const checkedItems = new Set(); // ticked-off ingredient keys
+const pantry = new Set();      // core ingredient names the user has
+const servings = new Map();    // recipe id -> chosen number of servings
+
+// ---- Persistence (localStorage) ---------------------------------------
+const STORE_KEY = 'macroKitchen.v1';
+function saveState() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      lang: LANG,
+      selected: [...selected],
+      checked: [...checkedItems],
+      pantry: [...pantry],
+      servings: [...servings]
+    }));
+  } catch (_) { /* storage unavailable — app still works for the session */ }
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (['en', 'nl', 'de'].includes(s.lang)) LANG = s.lang;
+    (s.selected || []).forEach(id => { if (RECIPES[id]) selected.add(id); });
+    (s.checked || []).forEach(k => checkedItems.add(k));
+    (s.pantry || []).forEach(p => pantry.add(p));
+    (s.servings || []).forEach(([id, n]) => { if (RECIPES[id] && n > 0) servings.set(Number(id), n); });
+  } catch (_) { /* ignore corrupt data */ }
+}
+loadState();
+
+const grid = document.getElementById('grid');
+const empty = document.getElementById('empty');
+const countEl = document.getElementById('count');
+
+function dietMatch(r) {
+  if (!diet) return true;
+  if (diet === 'vegetarian') return r.diet === 'vegetarian' || r.diet === 'vegan';
+  return r.diet === diet;
+}
+
+function macroPercents(r) {
+  const pc = r.p * 4, fc = r.f * 9, cc = r.c * 4;
+  const total = pc + fc + cc || 1;
+  return { p: Math.round(pc/total*100), f: Math.round(fc/total*100), c: Math.round(cc/total*100) };
+}
+
+// ---- Serving-size scaling ---------------------------------------------
+function getServings(id) { return servings.get(id) || RECIPES[id].serves; }
+
+const UNI_FRAC = { '¼': 0.25, '½': 0.5, '¾': 0.75, '⅓': 1/3, '⅔': 2/3, '⅛': 0.125 };
+
+function parseQty(s) {
+  s = s.trim();
+  if (UNI_FRAC[s] != null) return UNI_FRAC[s];
+  if (/^\d+\s+\d+\/\d+$/.test(s)) { const [w, fr] = s.split(/\s+/); const [n, d] = fr.split('/'); return +w + (+n) / (+d); }
+  if (/^\d+\/\d+$/.test(s)) { const [n, d] = s.split('/'); return (+n) / (+d); }
+  const v = parseFloat(s); return isNaN(v) ? null : v;
+}
+
+// Format a scaled amount using friendly cooking fractions.
+function fmtQty(v) {
+  if (v <= 0) return '0';
+  const whole = Math.floor(v + 1e-9);
+  const frac = v - whole;
+  const table = [[0, ''], [0.125, '⅛'], [0.25, '¼'], [1/3, '⅓'], [0.5, '½'],
+                 [2/3, '⅔'], [0.75, '¾'], [0.875, '⅞'], [1, '']];
+  let best = table[0], bd = Infinity;
+  for (const t of table) { const d = Math.abs(frac - t[0]); if (d < bd) { bd = d; best = t; } }
+  let w = whole, fs = best[1];
+  if (best[0] === 1) { w += 1; fs = ''; }
+  if (w === 0 && fs === '') return String(Math.round(v * 10) / 10); // tiny amount, no clean fraction
+  if (w === 0) return fs;
+  return fs ? `${w}${fs}` : `${w}`;
+}
+
+// Scale the leading quantity of an ingredient line; leave un-quantified lines alone.
+function scaleIngredient(str, factor) {
+  if (factor === 1) return str;
+  const m = str.match(/^(\d+\s+\d+\/\d+|\d+\/\d+|[¼½¾⅓⅔⅛]|\d+(?:\.\d+)?)/);
+  if (!m) return str;
+  const qty = parseQty(m[1]);
+  if (qty == null) return str;
+  return fmtQty(qty * factor) + str.slice(m[1].length);
+}
+
+function scaledIngredients(id) {
+  const factor = getServings(id) / RECIPES[id].serves;
+  return locIngredients(id).map(s => scaleIngredient(s, factor));
+}
+
+const MACRO_WORDS = {
+  en: { p: 'Protein', f: 'Fat', c: 'Carbs' },
+  nl: { p: 'Eiwit', f: 'Vet', c: 'Koolh.' },
+  de: { p: 'Protein', f: 'Fett', c: 'Kohlenh.' }
+};
+
+function servingsStepper(id) {
+  const n = getServings(id);
+  return `<div class="serv-stepper">
+    <span class="serv-label">${t('servingsLabel')}</span>
+    <button class="serv-btn" data-serv-dec="${id}" ${n <= 1 ? 'disabled' : ''} aria-label="−">−</button>
+    <span class="serv-count" id="serv_${id}">${n}</span>
+    <button class="serv-btn" data-serv-inc="${id}" aria-label="+">+</button>
+  </div>`;
+}
+
+function render() {
+  const list = RECIPES.filter(r => (!macro || r.macro === macro) && dietMatch(r));
+  if (goal) list.sort((a, b) => goalScore(b) - goalScore(a));
+  grid.innerHTML = '';
+  empty.style.display = list.length ? 'none' : 'block';
+  countEl.textContent = plural(list.length, 'recipeWord');
+
+  const macroLabel = t('macroTag');
+  const dietLabel = t('dietTag');
+  const mw = MACRO_WORDS[LANG];
+
+  for (const r of list) {
+    const pct = macroPercents(r);
+    const id = RECIPES.indexOf(r);
+    const inList = selected.has(id);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-top">
+        <h3>${locName(id)}</h3>
+        <div class="sub">${plural(r.serves, 'servingWord')} · ${locTime(r)} · <span class="kcal">${r.kcal} kcal</span></div>
+        <div class="tags">
+          <span class="tag diet">${dietLabel[r.diet]}</span>
+          <span class="tag macro">${macroLabel[r.macro]}</span>
+        </div>
+      </div>
+      ${goal ? `<div class="why">★ ${reasonsFor(r)}</div>` : ''}
+      <div class="macros">
+        <div class="macro-box"><div class="val">${r.p}g</div><div class="lbl">${mw.p}</div><div class="bar p"><span style="width:${pct.p}%"></span></div></div>
+        <div class="macro-box"><div class="val">${r.f}g</div><div class="lbl">${mw.f}</div><div class="bar f"><span style="width:${pct.f}%"></span></div></div>
+        <div class="macro-box"><div class="val">${r.c}g</div><div class="lbl">${mw.c}</div><div class="bar c"><span style="width:${pct.c}%"></span></div></div>
+      </div>
+      <div class="card-foot">
+        <details>
+          <summary>${t('viewRecipe')}</summary>
+          <div class="recipe-body">
+            <div class="ing-head">
+              <h4>${t('ingredientsH')}</h4>
+              ${servingsStepper(id)}
+            </div>
+            <ul id="ing_${id}">${scaledIngredients(id).map(i => `<li>${i}</li>`).join('')}</ul>
+            <h4>${t('methodH')}</h4>
+            <ol>${locSteps(id).map(s => `<li>${s}</li>`).join('')}</ol>
+          </div>
+        </details>
+        <button class="add-btn plan" data-plan="${id}">${t('cookStep')}</button>
+        <button class="add-btn ${inList ? 'added' : ''}" data-add="${id}">
+          ${inList ? t('addedToList') : t('addToList')}
+        </button>
+      </div>`;
+    grid.appendChild(card);
+  }
+}
+
+// ---- Grocery list ------------------------------------------------------
+const drawer = document.getElementById('drawer');
+const overlay = document.getElementById('overlay');
+const drawerBody = document.getElementById('drawerBody');
+const cartBadge = document.getElementById('cartBadge');
+const copyBtn = document.getElementById('copyBtn');
+const clearListBtn = document.getElementById('clearListBtn');
+
+function updateBadge() { cartBadge.textContent = selected.size; }
+
+// Combine ingredients across selected recipes, counting repeats.
+function aggregateIngredients() {
+  const map = new Map(); // key -> { label, count }
+  for (const id of selected) {
+    for (const ing of scaledIngredients(id)) {
+      const key = ing.trim().toLowerCase();
+      if (map.has(key)) map.get(key).count++;
+      else map.set(key, { label: ing.trim(), count: 1 });
+    }
+  }
+  return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function renderGrocery() {
+  updateBadge();
+  const ids = [...selected];
+
+  if (ids.length === 0) {
+    drawerBody.innerHTML = `<div class="drawer-empty">${t('emptyList')}</div>`;
+    copyBtn.disabled = true; clearListBtn.disabled = true;
+    return;
+  }
+  copyBtn.disabled = false; clearListBtn.disabled = false;
+
+  const recipesHtml = ids.map(id =>
+    `<div class="sel-recipe"><span>${locName(id)} <span class="serv-note">· ${plural(getServings(id), 'servingWord')}</span></span><button data-remove="${id}">${t('remove')}</button></div>`
+  ).join('');
+
+  const items = aggregateIngredients();
+  const itemsHtml = items.map(it => {
+    const key = it.label.toLowerCase();
+    const isChecked = checkedItems.has(key);
+    const countBadge = it.count > 1 ? `<span class="ing-count">×${it.count}</span>` : '';
+    return `<div class="ing-line ${isChecked ? 'checked' : ''}">
+      <input type="checkbox" data-check="${key.replace(/"/g, '&quot;')}" ${isChecked ? 'checked' : ''}>
+      <label>${it.label}${countBadge}</label>
+    </div>`;
+  }).join('');
+
+  drawerBody.innerHTML = `
+    <div class="sel-recipes">
+      <div class="section-label">${plural(ids.length, 'recipeWord')}</div>
+      ${recipesHtml}
+    </div>
+    <div class="section-label">${plural(items.length, 'itemsToBuy')}</div>
+    ${itemsHtml}`;
+}
+
+function toggleSelect(id) {
+  if (selected.has(id)) selected.delete(id);
+  else selected.add(id);
+  saveState();
+  render();          // refresh card button states
+  renderGrocery();
+}
+
+function openDrawer() { drawer.classList.add('open'); overlay.classList.add('open'); renderGrocery(); }
+function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('open'); }
+
+document.getElementById('cartFab').addEventListener('click', openDrawer);
+document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+overlay.addEventListener('click', closeDrawer);
+
+// Change a recipe's serving count and rescale its ingredient amounts.
+function changeServings(id, delta) {
+  const next = Math.max(1, getServings(id) + delta);
+  if (next === RECIPES[id].serves) servings.delete(id);
+  else servings.set(id, next);
+  saveState();
+  // Update any on-screen copies (card + guided plan) in place.
+  document.querySelectorAll(`#serv_${id}`).forEach(el => { el.textContent = getServings(id); });
+  document.querySelectorAll(`#ing_${id}`).forEach(el => {
+    el.innerHTML = scaledIngredients(id).map(i => `<li>${i}</li>`).join('');
+  });
+  document.querySelectorAll(`[data-serv-dec="${id}"]`).forEach(b => { b.disabled = getServings(id) <= 1; });
+  if (selected.has(id) && drawer.classList.contains('open')) renderGrocery();
+}
+
+// Add / remove + open cooking plan + adjust servings via card buttons
+grid.addEventListener('click', e => {
+  const dec = e.target.closest('[data-serv-dec]');
+  if (dec) { changeServings(Number(dec.dataset.servDec), -1); return; }
+  const inc = e.target.closest('[data-serv-inc]');
+  if (inc) { changeServings(Number(inc.dataset.servInc), +1); return; }
+  const plan = e.target.closest('[data-plan]');
+  if (plan) { openPlan(Number(plan.dataset.plan)); return; }
+  const btn = e.target.closest('[data-add]'); if (!btn) return;
+  toggleSelect(Number(btn.dataset.add));
+});
+
+// Interactions inside the drawer (remove recipe, tick items)
+drawerBody.addEventListener('click', e => {
+  const rm = e.target.closest('[data-remove]');
+  if (rm) { toggleSelect(Number(rm.dataset.remove)); return; }
+});
+drawerBody.addEventListener('change', e => {
+  const cb = e.target.closest('[data-check]'); if (!cb) return;
+  const key = cb.dataset.check;
+  if (cb.checked) checkedItems.add(key); else checkedItems.delete(key);
+  cb.closest('.ing-line').classList.toggle('checked', cb.checked);
+  saveState();
+});
+
+clearListBtn.addEventListener('click', () => {
+  selected.clear(); checkedItems.clear();
+  saveState();
+  render(); renderGrocery();
+});
+
+copyBtn.addEventListener('click', async () => {
+  const items = aggregateIngredients();
+  const text = t('copyHeader') + '\n\n' +
+    items.map(it => `- ${it.label}${it.count > 1 ? ` (×${it.count})` : ''}`).join('\n');
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (_) {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  }
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1600);
+});
+
+// ---- Cook from ingredients you have ------------------------------------
+// Reduce an ingredient line ("2 tbsp olive oil") to a core name ("olive oil").
+// Preparation words (dropped from a trailing comma clause) and measurement
+// units (stripped from the front) are defined per language.
+const PREP_L = {
+  en: ['diced','minced','grated','sliced','shredded','drained','cubed','julienned','chopped','crumbled','halved','peeled','optional','to taste'],
+  nl: ['gesnipperd','gehakt','geraspt','in plakjes','geplukt','uitgelekt','in blokjes','in reepjes','verkruimeld','gehalveerd','geschild','optioneel'],
+  de: ['gewürfelt','gehackt','gerieben','in scheiben','zerpflückt','abgetropft','zerbröselt','halbiert','geschält','optional','in streifen']
+};
+const UNITS_L = {
+  en: ['tbsp','tsp','tablespoon','tablespoons','teaspoon','teaspoons','cup','cups','g','kg','ml','l','can','cans','clove','cloves','slice','slices','sprig','sprigs','rasher','rashers','scoop','scoops','handful','large','small','oz','pinch'],
+  nl: ['el','tl','kop','koppen','g','kg','ml','l','blik','blikken','teentje','teentjes','plakje','plakjes','sneetje','sneetjes','takje','takjes','reepje','reepjes','schep','handvol','grote','kleine','snufje'],
+  de: ['el','tl','tasse','tassen','g','kg','ml','l','dose','dosen','zehe','zehen','scheibe','scheiben','zweig','zweige','portion','handvoll','große','kleine','prise','schuss']
+};
+let curPrep = new Set(PREP_L.en);
+let curUnits = new Set(UNITS_L.en);
+
+function coreIngredient(str) {
+  let s = str.toLowerCase().trim().replace(/\([^)]*\)/g, '').trim();
+  const parts = s.split(',').map(x => x.trim()).filter(Boolean);
+  while (parts.length > 1 && curPrep.has(parts[parts.length - 1])) parts.pop();
+  s = parts.join(', ');
+  let tokens = s.split(/\s+/);
+  while (tokens.length) {
+    const raw = tokens[0];
+    if (/^[\d/¼½¾.\-–]+$/.test(raw)) { tokens.shift(); continue; }   // pure quantity
+    if (curUnits.has(raw.replace(/[^a-zäöü%]/g, ''))) { tokens.shift(); continue; } // 250g, tbsp…
+    break;
+  }
+  return (tokens.join(' ').trim() || str.toLowerCase().trim());
+}
+
+// Build recipe -> core ingredient sets and the master pantry list (per language).
+let RECIPE_CORES = [];
+let ALL_CORES = [];
+function rebuildIndexes() {
+  curPrep = new Set([...PREP_L[LANG], ...PREP_L.en]);
+  curUnits = new Set([...UNITS_L[LANG], ...UNITS_L.en]);
+  RECIPE_CORES = RECIPES.map((_, i) => [...new Set(locIngredients(i).map(coreIngredient))]);
+  ALL_CORES = [...new Set(RECIPE_CORES.flat())].sort((a, b) => a.localeCompare(b));
+}
+rebuildIndexes();
+
+const cookModal = document.getElementById('cookModal');
+const pantryList = document.getElementById('pantryList');
+const pantrySearch = document.getElementById('pantrySearch');
+const cookResults = document.getElementById('cookResults');
+const cookResultsSub = document.getElementById('cookResultsSub');
+
+function renderPantry() {
+  const q = pantrySearch.value.trim().toLowerCase();
+  const shown = ALL_CORES.filter(c => !q || c.includes(q));
+  pantryList.innerHTML = shown.map(c => {
+    const id = 'p_' + c.replace(/[^a-z0-9]/g, '_');
+    return `<div class="pantry-item">
+      <input type="checkbox" id="${id}" data-pantry="${c.replace(/"/g, '&quot;')}" ${pantry.has(c) ? 'checked' : ''}>
+      <label for="${id}">${c}</label>
+    </div>`;
+  }).join('') || `<p style="color:var(--muted)">—</p>`;
+}
+
+function renderCookResults() {
+  const have = pantry;
+  if (have.size === 0) {
+    cookResultsSub.textContent = t('pickToSee');
+    cookResults.innerHTML = `<p style="color:var(--muted);padding-top:10px">${t('pickToSee')}</p>`;
+    return;
+  }
+  const scored = RECIPES.map((r, i) => {
+    const cores = RECIPE_CORES[i];
+    const matched = cores.filter(c => have.has(c));
+    const missing = cores.filter(c => !have.has(c));
+    return { r, i, matched, missing, total: cores.length };
+  }).filter(x => x.matched.length > 0)
+    .sort((a, b) => (b.matched.length - b.missing.length) - (a.matched.length - a.missing.length)
+                 || b.matched.length - a.matched.length);
+
+  const makeable = scored.filter(x => x.missing.length === 0).length;
+  cookResultsSub.textContent = makeable
+    ? fmt(makeable === 1 ? 'mealMakeNow' : 'mealsMakeNow', { n: makeable })
+    : fmt(scored.length === 1 ? 'closeMatch' : 'closeMatches', { n: scored.length });
+
+  cookResults.innerHTML = scored.map(x => {
+    const pct = Math.round(x.matched.length / x.total * 100);
+    const inList = selected.has(x.i);
+    const status = x.missing.length === 0
+      ? `<span class="badge-make">${t('youCanMake')}</span>`
+      : `${t('haveWord')} ${x.matched.length}/${x.total} · <span class="miss">${t('missWord')} ${x.missing.length}</span>`;
+    return `<div class="result ${x.missing.length === 0 ? 'makeable' : ''}">
+      <h4>${locName(x.i)}</h4>
+      <div class="match">${status}</div>
+      <div class="have-bar"><span style="width:${pct}%"></span></div>
+      <div class="result-actions">
+        <button class="go" data-cook-plan="${x.i}">${t('cookStep')}</button>
+        <button data-cook-select="${x.i}">${t('viewRecipeBtn')}</button>
+        <button data-cook-add="${x.i}">${inList ? t('inList') : t('addToList')}</button>
+      </div>
+      <div class="result-detail" id="cd_${x.i}">
+        ${x.missing.length ? `<p class="missing-note">${fmt('stillNeed', { list: x.missing.join(', ') })}</p>` : ''}
+        <strong>${t('ingredientsH')}</strong>
+        <ul>${scaledIngredients(x.i).map(g => `<li>${g}</li>`).join('')}</ul>
+        <strong>${t('methodH')}</strong>
+        <ol>${locSteps(x.i).map(s => `<li>${s}</li>`).join('')}</ol>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCook() { cookModal.classList.add('open'); renderPantry(); renderCookResults(); }
+function closeCook() { cookModal.classList.remove('open'); }
+
+document.getElementById('cookLaunch').addEventListener('click', openCook);
+document.getElementById('cookClose').addEventListener('click', closeCook);
+cookModal.addEventListener('click', e => { if (e.target === cookModal) closeCook(); });
+pantrySearch.addEventListener('input', renderPantry);
+
+pantryList.addEventListener('change', e => {
+  const cb = e.target.closest('[data-pantry]'); if (!cb) return;
+  const c = cb.dataset.pantry;
+  if (cb.checked) pantry.add(c); else pantry.delete(c);
+  saveState();
+  renderCookResults();
+});
+document.getElementById('pantryClear').addEventListener('click', () => {
+  pantry.clear(); saveState(); renderPantry(); renderCookResults();
+});
+
+cookResults.addEventListener('click', e => {
+  const plan = e.target.closest('[data-cook-plan]');
+  if (plan) { closeCook(); openPlan(Number(plan.dataset.cookPlan)); return; }
+  const sel = e.target.closest('[data-cook-select]');
+  if (sel) {                                    // "View recipe" -> show details
+    const d = document.getElementById('cd_' + sel.dataset.cookSelect);
+    if (d) d.classList.toggle('open');
+    return;
+  }
+  const add = e.target.closest('[data-cook-add]');
+  if (add) {                                    // add to grocery list
+    toggleSelect(Number(add.dataset.cookAdd));
+    renderCookResults();
+  }
+});
+
+// ---- Goal-based suggestions --------------------------------------------
+// Interpret a free-text goal into filters + scoring hints. No server needed —
+// it maps common phrases to macro focus, diet, calories, time and ingredients.
+// Keyword tables per language. The current language and English are both
+// checked, so English phrases keep working whatever the interface language.
+const GOAL_KW = {
+  en: { vegan:['vegan'], vegetarian:['vegetarian','veggie','no meat','meat-free','meat free'],
+    meat:['meat','chicken','beef','steak','pork','fish','salmon','turkey','carnivore'],
+    protein:['protein','muscle','build','bulk','gains','gain','strength','lean mass','tone'],
+    fat:['keto','low-carb','low carb','high-fat','high fat','fatty'],
+    carb:['carb','carbs','energy','endurance','run','running','marathon','fuel','training'],
+    low:['lose weight','weight loss','cut','cutting','lean','light','low-cal','low cal','low calorie','slim','deficit','fat loss','diet'],
+    high:['gain weight','bulking','mass','hearty','filling','hungry','big meal'],
+    quick:['quick','fast','easy','busy','weeknight','no time','15 min','20 min','30 min','simple','speedy'] },
+  nl: { vegan:['vegan','veganist','veganistisch'], vegetarian:['vegetarisch','vega ','geen vlees','vleesloos','zonder vlees'],
+    meat:['vlees','kip','rund','biefstuk','varken','vis','zalm','kalkoen'],
+    protein:['eiwit','proteïne','proteine','spier','spieropbouw','bulk','kracht'],
+    fat:['keto','koolhydraatarm','weinig koolhydraten','vetrijk'],
+    carb:['koolhydraat','koolhydraten','energie','uithouding','hardlopen','marathon','training'],
+    low:['afvallen','gewicht verliezen','light','licht','caloriearm','weinig calorieën','weinig calorieen','slank','dieet'],
+    high:['aankomen','massa','stevig','vullend','honger','grote maaltijd'],
+    quick:['snel','makkelijk','gemakkelijk','druk','doordeweeks','geen tijd','15 min','20 min','30 min','simpel'] },
+  de: { vegan:['vegan'], vegetarian:['vegetarisch','veggie','kein fleisch','fleischlos','ohne fleisch'],
+    meat:['fleisch','hähnchen','haehnchen','huhn','rind','steak','schwein','fisch','lachs','pute'],
+    protein:['protein','eiweiß','eiweiss','muskel','muskelaufbau','bulk','kraft'],
+    fat:['keto','low-carb','kohlenhydratarm','wenig kohlenhydrate','fettreich'],
+    carb:['kohlenhydrat','kohlenhydrate','energie','ausdauer','laufen','marathon','training'],
+    low:['abnehmen','gewicht verlieren','leicht','kalorienarm','wenig kalorien','schlank','diät','diaet'],
+    high:['zunehmen','masse','herzhaft','sättigend','saettigend','hunger','große mahlzeit','grosse mahlzeit'],
+    quick:['schnell','einfach','beschäftigt','beschaeftigt','unter der woche','keine zeit','15 min','20 min','30 min','simpel'] }
+};
+function anyKw(q, cat) {
+  return [GOAL_KW[LANG][cat] || [], GOAL_KW.en[cat] || []].some(arr => arr.some(w => q.includes(w)));
+}
+
+function parseGoal(text) {
+  const q = ' ' + text.toLowerCase() + ' ';
+  const g = { text: text.trim(), macro: null, diet: null, lowCal: false, highCal: false,
+              quick: false, penalizeCarb: false, ingredients: [], notes: [] };
+
+  if (anyKw(q, 'vegan')) g.diet = 'vegan';
+  else if (anyKw(q, 'vegetarian')) g.diet = 'vegetarian';
+  else if (anyKw(q, 'meat')) g.diet = 'meat';
+
+  if (anyKw(q, 'protein')) g.macro = 'protein';
+  if (anyKw(q, 'fat')) { g.macro = 'fat'; g.penalizeCarb = true; }
+  if (anyKw(q, 'carb') && !g.penalizeCarb) g.macro = 'carb';   // don't let "low-carb" flip to carb
+
+  if (anyKw(q, 'low')) g.lowCal = true;
+  if (anyKw(q, 'high')) g.highCal = true;
+  if (anyKw(q, 'quick')) g.quick = true;
+
+  // Ingredient mentions the user cares about (localized core names)
+  for (const c of ALL_CORES) if (q.includes(' ' + c.split(' ')[0])) g.ingredients.push(c);
+
+  // Human-readable interpretation, in the current language
+  if (g.macro) g.notes.push(t(g.macro === 'protein' ? 'nProtein' : g.macro === 'fat' ? 'nFat' : 'nCarb'));
+  if (g.diet) g.notes.push(t(g.diet === 'vegan' ? 'nVegan' : g.diet === 'vegetarian' ? 'nVegetarian' : 'nMeat'));
+  if (g.lowCal) g.notes.push(t('nLighter'));
+  if (g.highCal) g.notes.push(t('nHearty'));
+  if (g.quick) g.notes.push(t('nQuick'));
+  return g;
+}
+
+function minutesOf(r) { return parseInt(r.time, 10) || 30; }
+
+function goalScore(r) {
+  if (!goal) return 0;
+  let s = 0;
+  if (goal.macro && r.macro === goal.macro) s += 6;
+  if (goal.diet) s += dietAllows(r, goal.diet) ? 4 : -8;
+  if (goal.macro === 'protein') s += r.p / 12;
+  if (goal.macro === 'carb') s += r.c / 22;
+  if (goal.macro === 'fat') s += r.f / 12;
+  if (goal.penalizeCarb) s -= r.c / 18;
+  if (goal.lowCal) s += (550 - r.kcal) / 90;
+  if (goal.highCal) s += (r.kcal - 380) / 90;
+  if (goal.quick) { const m = minutesOf(r); s += m <= 20 ? 3 : m <= 30 ? 1 : -1.5; }
+  const cores = RECIPE_CORES[RECIPES.indexOf(r)];
+  for (const ing of goal.ingredients) if (cores.includes(ing)) s += 3;
+  return s;
+}
+
+function dietAllows(r, d) {
+  if (d === 'vegetarian') return r.diet === 'vegetarian' || r.diet === 'vegan';
+  return r.diet === d;
+}
+
+// Short "why this meal" line shown on cards when a goal is active
+function reasonsFor(r) {
+  const bits = [];
+  const id = RECIPES.indexOf(r);
+  if (goal.macro === 'protein') bits.push(fmt('rProtein', { g: r.p }));
+  if (goal.macro === 'carb') bits.push(fmt('rCarbs', { g: r.c }));
+  if (goal.macro === 'fat') bits.push(fmt('rFat', { g: r.f }));
+  if (goal.lowCal || goal.highCal) bits.push(fmt('rKcal', { k: r.kcal }));
+  if (goal.quick) bits.push(locTime(r));
+  const hit = goal.ingredients.filter(i => RECIPE_CORES[id].includes(i));
+  if (hit.length) bits.push(fmt('rUses', { list: hit.slice(0, 2).join(', ') }));
+  if (!bits.length) bits.push(`${r.kcal} kcal · ${locTime(r)}`);
+  return bits.join(' · ');
+}
+
+const goalInput = document.getElementById('goalInput');
+const goalBanner = document.getElementById('goalBanner');
+
+function applyGoal(text) {
+  if (!text.trim()) { clearGoal(); return; }
+  goal = parseGoal(text);
+  // Reset chips so each goal is self-contained, then reflect the goal's macro/diet
+  macro = goal.macro; diet = goal.diet;
+  document.querySelectorAll('[data-macro]').forEach(b => b.classList.toggle('active', b.dataset.macro === macro));
+  document.querySelectorAll('[data-diet]').forEach(b => b.classList.toggle('active', b.dataset.diet === diet));
+  const interp = goal.notes.length ? goal.notes.join(' · ') : t('bestOverall');
+  goalBanner.innerHTML = `<strong>${t('goalFor')}</strong> “${goal.text}” — ${t('showing')} <em>${interp}</em>, ${t('bestFirst')}
+    <button class="clear-goal" id="clearGoalBtn">${t('clearWord')}</button>`;
+  goalBanner.classList.add('show');
+  document.getElementById('clearGoalBtn').addEventListener('click', clearGoal);
+  render();
+}
+
+function clearGoal() {
+  goal = null;
+  goalInput.value = '';
+  goalBanner.classList.remove('show');
+  render();
+}
+
+document.getElementById('goalGo').addEventListener('click', () => applyGoal(goalInput.value));
+goalInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyGoal(goalInput.value); });
+document.getElementById('goalExamples').addEventListener('click', e => {
+  const b = e.target.closest('.goal-eg'); if (!b) return;
+  goalInput.value = b.textContent; applyGoal(b.textContent);
+});
+
+// ---- Guided step-by-step cooking plan ----------------------------------
+const cookPlan = document.getElementById('cookPlan');
+const planBody = document.getElementById('planBody');
+let planId = null, planStep = 0;   // step 0 = mise en place, 1..N = steps, N+1 = done
+
+function openPlan(id) {
+  planId = id; planStep = 0;
+  cookPlan.classList.add('open');
+  renderPlan();
+}
+function closePlan() { cookPlan.classList.remove('open'); }
+
+function renderPlan() {
+  const r = RECIPES[planId];
+  const N = r.steps.length;
+  const last = N + 1;                       // index of the "done" screen
+  planStep = Math.max(0, Math.min(planStep, last));
+
+  const steps = locSteps(planId);
+  document.getElementById('planName').textContent = locName(planId);
+  document.getElementById('planMeta').textContent = `${plural(getServings(planId), 'servingWord')} · ${locTime(r)} · ${r.kcal} kcal`;
+
+  let html = '';
+  if (planStep === 0) {
+    html = `<div class="plan-progress"><span style="width:0%"></span></div>
+      <div class="step-counter">${t('beforeStart')}</div>
+      <div class="plan-ingredients">
+        <div class="ing-head">
+          <h4>${t('getReady')}</h4>
+          ${servingsStepper(planId)}
+        </div>
+        <ul id="ing_${planId}">${scaledIngredients(planId).map(i => `<li>${i}</li>`).join('')}</ul>
+      </div>`;
+  } else if (planStep <= N) {
+    const pct = Math.round(planStep / (N + 1) * 100);
+    html = `<div class="plan-progress"><span style="width:${pct}%"></span></div>
+      <div class="step-counter">${fmt('stepOf', { a: planStep, b: N })}</div>
+      <div class="step-text">${steps[planStep - 1]}</div>`;
+  } else {
+    html = `<div class="plan-progress"><span style="width:100%"></span></div>
+      <div class="plan-done">
+        <div class="big">🎉</div>
+        <h3>${fmt('readyTitle', { name: locName(planId) })}</h3>
+        <p style="color:var(--muted)">${t('enjoy')}</p>
+      </div>`;
+  }
+  planBody.innerHTML = html;
+
+  const backBtn = document.getElementById('planBack');
+  const nextBtn = document.getElementById('planNext');
+  backBtn.style.visibility = planStep === 0 ? 'hidden' : 'visible';
+  if (planStep === 0) nextBtn.textContent = t('startCooking');
+  else if (planStep < N) nextBtn.textContent = t('nextStep');
+  else if (planStep === N) nextBtn.textContent = t('finish');
+  else nextBtn.textContent = t('doneClose');
+}
+
+document.getElementById('planNext').addEventListener('click', () => {
+  const N = RECIPES[planId].steps.length;
+  if (planStep > N) { closePlan(); return; }
+  planStep++; renderPlan();
+});
+document.getElementById('planBack').addEventListener('click', () => { planStep--; renderPlan(); });
+document.getElementById('planClose').addEventListener('click', closePlan);
+planBody.addEventListener('click', e => {
+  const dec = e.target.closest('[data-serv-dec]');
+  const inc = e.target.closest('[data-serv-inc]');
+  if (!dec && !inc) return;
+  changeServings(planId, dec ? -1 : +1);
+  document.getElementById('planMeta').textContent =
+    `${plural(getServings(planId), 'servingWord')} · ${locTime(RECIPES[planId])} · ${RECIPES[planId].kcal} kcal`;
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closePlan(); closeCook(); closeDrawer(); }
+});
+
+document.getElementById('macroOpts').addEventListener('click', e => {
+  const btn = e.target.closest('[data-macro]'); if (!btn) return;
+  macro = macro === btn.dataset.macro ? null : btn.dataset.macro;
+  document.querySelectorAll('[data-macro]').forEach(b => b.classList.toggle('active', b.dataset.macro === macro));
+  render();
+});
+document.getElementById('dietOpts').addEventListener('click', e => {
+  const btn = e.target.closest('[data-diet]'); if (!btn) return;
+  diet = diet === btn.dataset.diet ? null : btn.dataset.diet;
+  document.querySelectorAll('[data-diet]').forEach(b => b.classList.toggle('active', b.dataset.diet === diet));
+  render();
+});
+document.getElementById('clearBtn').addEventListener('click', () => {
+  macro = null; diet = null;
+  document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+  goal = null; goalInput.value = ''; goalBanner.classList.remove('show');
+  render();
+});
+
+// ---- Language switching ------------------------------------------------
+function applyLang(lang) {
+  LANG = lang;
+  document.documentElement.lang = lang;
+  // Static text nodes
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  // Example chips
+  const ex = document.getElementById('goalExamples');
+  ex.querySelectorAll('.goal-eg').forEach(b => b.remove());
+  t('examples').forEach(s => {
+    const b = document.createElement('button');
+    b.className = 'goal-eg'; b.textContent = s; ex.appendChild(b);
+  });
+  // Active language button
+  document.querySelectorAll('[data-lang]').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  // Rebuild ingredient indexes (they depend on the language) and re-render
+  rebuildIndexes();
+  pantrySearch.value = '';
+  if (goal) applyGoal(goal.text); else render();
+  renderGrocery();
+  if (cookModal.classList.contains('open')) { renderPantry(); renderCookResults(); }
+  if (cookPlan.classList.contains('open')) renderPlan();
+  saveState();
+}
+
+document.getElementById('langSwitch').addEventListener('click', e => {
+  const b = e.target.closest('[data-lang]'); if (!b) return;
+  applyLang(b.dataset.lang);
+});
+
+applyLang(LANG);   // sets up all UI text + renders, honoring the saved language
+</script>
+</body>
+</html>
