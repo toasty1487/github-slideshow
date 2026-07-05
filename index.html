@@ -1570,7 +1570,8 @@ function renderMealPlan() {
     <div>${MACRO_WORDS[LANG].c}<b>${tc}g</b></div>
   </div>`;
 
-  if (mpShowList) {
+  // Shopping list is always shown right below the plan, grouped by category.
+  {
     const items = planShoppingItems();
     const labels = CAT_LABELS[LANG] || CAT_LABELS.en;
     const line = it => {
@@ -1596,8 +1597,7 @@ function renderMealPlan() {
   }
 
   body.innerHTML = html;
-  foot.innerHTML = `<button class="btn primary" id="mpShopToggle">🛒 ${pt('shopping')}</button>
-    <button class="btn" id="mpCopy">${pt('copyPlan')}</button>`;
+  foot.innerHTML = `<button class="btn primary" id="mpCopy">${pt('copyPlan')}</button>`;
 }
 
 async function copyMealPlan() {
@@ -1648,11 +1648,6 @@ mealPlanModal.addEventListener('click', e => {
   if (sw) { const [i, s] = sw.dataset.mpSwap.split(':'); swapMeal(Number(i), s); return; }
   if (e.target.closest('#mpCopy')) { copyMealPlan(); return; }
   if (e.target.closest('#mpShopCopy')) { copyShoppingList(); return; }
-  if (e.target.closest('#mpShopToggle')) {
-    mpShowList = !mpShowList; renderMealPlan();
-    if (mpShowList) setTimeout(() => document.querySelector('.mp-shop')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
-    return;
-  }
 });
 mealPlanModal.addEventListener('change', e => {
   if (e.target.id === 'mpSameB') { mpSameBreakfast = e.target.checked; saveState(); if (mealPlan.length) renderMealPlan(); return; }
