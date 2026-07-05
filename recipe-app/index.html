@@ -250,6 +250,8 @@
   @media (max-width: 620px) { .mp-meal .slot { width: 100%; flex-basis: 100%; } .mp-meal { flex-wrap: wrap; } }
   .mp-shop { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
   .mp-shop-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .shop-cat { margin-top: 10px; }
+  .shop-cat-head { font-size: 0.82rem; font-weight: 700; color: var(--accent); margin: 4px 0 2px; }
 
   /* Cook modal */
   .modal {
@@ -1358,17 +1360,44 @@ function variationFor(id, dayIdx) {
 let mpShowList = false;              // shopping list expanded inside the plan?
 const mpShopChecked = new Set();     // ticked-off shopping items
 
+// Shopping categories, decided from the (language-independent) English ingredient.
+const CAT_ORDER = ['produce', 'meatfish', 'dairy', 'bakery', 'pantry'];
+const CAT_LABELS = {
+  en: { produce: "🥦 Fruit & vegetables", meatfish: "🍗 Meat & fish", dairy: "🧀 Dairy & eggs", bakery: "🍞 Bread & grains", pantry: "🫙 Pantry & other" },
+  nl: { produce: "🥦 Groente & fruit", meatfish: "🍗 Vlees & vis", dairy: "🧀 Zuivel & eieren", bakery: "🍞 Brood & granen", pantry: "🫙 Voorraadkast & overig" },
+  de: { produce: "🥦 Obst & Gemüse", meatfish: "🍗 Fleisch & Fisch", dairy: "🧀 Milchprodukte & Eier", bakery: "🍞 Brot & Getreide", pantry: "🫙 Vorrat & Sonstiges" }
+};
+const CAT_PANTRY = [" oil", "stock", "broth", "coconut milk", "plant milk", "almond milk", "oat milk", "peanut butter", "almond butter", "nut butter", "tahini", "soy sauce", "teriyaki", "miso", "vinegar", "honey", "maple", "syrup", "salt", "black pepper", "paprika", "chili", "chilli", "cumin", "oregano", "turmeric", "cinnamon", "vanilla", "curry", "passata", "tomato sauce", "pesto", "hummus", "salsa", "mustard", "balsamic", "cocoa", "nutritional yeast", "seeds", "seed", "chia", "walnut", "almond", "cashew", "pine nut", "peanut", "mixed nuts", "nuts", "beans", "bean", "chickpea", "lentil", "tofu", "tempeh", "seitan", "edamame", "raisin", "flaxseed", "horseradish", "wakame", "cornstarch", "bay leaf", "bay leaves", "olives", "whey", "tikka"];
+const CAT_MEAT = ["chicken", "beef", "pork", "turkey", "salmon", "tuna", " cod", "sardine", "mackerel", "shrimp", "prawn", "bacon", "chorizo", "sausage", "ham ", "lamb", "duck", "fish", "steak", "ribeye", "sirloin"];
+const CAT_DAIRY = ["yogurt", "yoghurt", "skyr", "quark", "cheese", "cheddar", "mozzarella", "feta", "halloumi", "paneer", "ricotta", "parmesan", "butter", "cream", "egg", "brie", "camembert", "burrata", "creme", "crème"];
+const CAT_BAKERY = ["bread", "sourdough", "bagel", "tortilla", "flatbread", "pasta", "noodle", "rice", "quinoa", "couscous", "oats", "oat", "gnocchi", "orzo", "barley", "granola", "lasagne", "pappardelle", "wrap", "flour", "fladen"];
+const CAT_PRODUCE = ["onion", "garlic", "tomato", "spinach", "red pepper", "pepper", "broccoli", "avocado", "lemon", "lime", "banana", "berry", "berries", "apple", "mango", "carrot", "cucumber", "kale", "mushroom", "courgette", "zucchini", "cauliflower", "potato", "corn", "pea", "cabbage", "rocket", "basil", "parsley", "coriander", "cilantro", "thyme", "rosemary", "dill", "chive", "mint", "ginger", "leek", "fennel", "pumpkin", "lettuce", "leaves", "pear", "herb", "pak choi", "spring onion", "fresh", " veg"];
+function ingredientCategory(enStr) {
+  const s = ' ' + (enStr || '').toLowerCase() + ' ';
+  const has = arr => arr.some(k => s.includes(k));
+  if (s.includes('butternut') || s.includes('squash')) return 'produce';
+  if (has(CAT_PANTRY)) return 'pantry';
+  if (has(CAT_MEAT)) return 'meatfish';
+  if (has(CAT_DAIRY)) return 'dairy';
+  if (has(CAT_BAKERY)) return 'bakery';
+  if (has(CAT_PRODUCE)) return 'produce';
+  return 'pantry';
+}
+
 // Combined shopping list for the whole plan: every meal instance counts, so a
-// breakfast repeated across the week is multiplied accordingly.
+// breakfast repeated across the week is multiplied accordingly. Each item keeps
+// a category derived from the English ingredient at the same position.
 function planShoppingItems() {
   const map = new Map();
   mealPlan.forEach(day => SLOTS.forEach(s => {
     const id = day[s]; if (id == null) return;
-    for (const ing of scaledIngredients(id)) {
+    const scaled = scaledIngredients(id);
+    const enIng = RECIPES[id].en.ingredients;
+    scaled.forEach((ing, idx) => {
       const key = ing.trim().toLowerCase();
       if (map.has(key)) map.get(key).count++;
-      else map.set(key, { label: ing.trim(), count: 1 });
-    }
+      else map.set(key, { label: ing.trim(), count: 1, cat: ingredientCategory(enIng[idx] || ing) });
+    });
   }));
   return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
 }
@@ -1543,19 +1572,26 @@ function renderMealPlan() {
 
   if (mpShowList) {
     const items = planShoppingItems();
+    const labels = CAT_LABELS[LANG] || CAT_LABELS.en;
+    const line = it => {
+      const key = it.label.toLowerCase();
+      const ch = mpShopChecked.has(key);
+      return `<div class="ing-line ${ch ? 'checked' : ''}">
+        <input type="checkbox" data-shop-check="${key.replace(/"/g, '&quot;')}" ${ch ? 'checked' : ''}>
+        <label>${it.label}${it.count > 1 ? ` <span class="ing-count">×${it.count}</span>` : ''}</label>
+      </div>`;
+    };
+    const groups = CAT_ORDER.map(cat => {
+      const inCat = items.filter(it => it.cat === cat);
+      if (!inCat.length) return '';
+      return `<div class="shop-cat"><div class="shop-cat-head">${labels[cat]}</div>${inCat.map(line).join('')}</div>`;
+    }).join('');
     html += `<div class="mp-shop">
       <div class="mp-shop-head">
         <span class="section-label">🛒 ${pt('shopping')} · ${plural(items.length, 'itemsToBuy')}</span>
         <button class="mini-btn" id="mpShopCopy">${t('copyList')}</button>
       </div>
-      ${items.map(it => {
-        const key = it.label.toLowerCase();
-        const ch = mpShopChecked.has(key);
-        return `<div class="ing-line ${ch ? 'checked' : ''}">
-          <input type="checkbox" data-shop-check="${key.replace(/"/g, '&quot;')}" ${ch ? 'checked' : ''}>
-          <label>${it.label}${it.count > 1 ? ` <span class="ing-count">×${it.count}</span>` : ''}</label>
-        </div>`;
-      }).join('')}
+      ${groups}
     </div>`;
   }
 
@@ -1583,8 +1619,13 @@ async function copyMealPlan() {
 
 async function copyShoppingList() {
   const items = planShoppingItems();
-  const text = pt('shopping') + ' — Macro Kitchen\n\n' +
-    items.map(it => `- ${it.label}${it.count > 1 ? ` (×${it.count})` : ''}`).join('\n');
+  const labels = CAT_LABELS[LANG] || CAT_LABELS.en;
+  const sections = CAT_ORDER.map(cat => {
+    const inCat = items.filter(it => it.cat === cat);
+    if (!inCat.length) return '';
+    return labels[cat] + '\n' + inCat.map(it => `- ${it.label}${it.count > 1 ? ` (×${it.count})` : ''}`).join('\n');
+  }).filter(Boolean);
+  const text = pt('shopping') + ' — Macro Kitchen\n\n' + sections.join('\n\n');
   try { await navigator.clipboard.writeText(text); }
   catch (_) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
   const toast = document.getElementById('toast'); toast.textContent = t('toast'); toast.classList.add('show');
