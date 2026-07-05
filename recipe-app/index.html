@@ -222,6 +222,13 @@
   .mp-total div { font-size: 0.82rem; color: var(--muted); }
   .mp-total div b { display: block; font-size: 1.1rem; color: var(--text); }
   .mp-empty { color: var(--muted); text-align: center; padding: 40px 10px; }
+  .mp-kcal { display: inline-flex; align-items: center; gap: 8px; }
+  .mp-kcal input { width: 90px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font-size: 0.9rem; }
+  .mp-kcal input:focus { outline: none; border-color: var(--accent); }
+  .kcal-badge { font-size: 0.72rem; padding: 2px 7px; border-radius: 999px; margin-left: 4px; white-space: nowrap; }
+  .kcal-badge.ok { color: var(--accent); border: 1px solid rgba(74,222,128,0.4); }
+  .kcal-badge.off { color: #fbbf24; border: 1px solid rgba(251,191,36,0.4); }
 
   /* Cook modal */
   .modal {
@@ -588,6 +595,7 @@ const pantry = new Set();      // core ingredient names the user has
 const servings = new Map();    // recipe id -> chosen number of servings
 let mealPlan = [];             // ordered recipe ids making up the meal plan
 let mpDays = 5;                // how many days/meals to generate
+let mpKcal = null;             // optional target kcal per day/meal
 
 // ---- Persistence (localStorage) ---------------------------------------
 const STORE_KEY = 'macroKitchen.v1';
@@ -599,7 +607,7 @@ function saveState() {
       checked: [...checkedItems],
       pantry: [...pantry],
       servings: [...servings],
-      mealPlan, mpDays
+      mealPlan, mpDays, mpKcal
     }));
   } catch (_) { /* storage unavailable — app still works for the session */ }
 }
@@ -615,6 +623,7 @@ function loadState() {
     (s.servings || []).forEach(([id, n]) => { if (RECIPES[id] && n > 0) servings.set(Number(id), n); });
     if (Array.isArray(s.mealPlan)) mealPlan = s.mealPlan.filter(id => RECIPES[id]);
     if (s.mpDays >= 1 && s.mpDays <= 7) mpDays = s.mpDays;
+    if (s.mpKcal > 0) mpKcal = s.mpKcal;
   } catch (_) { /* ignore corrupt data */ }
 }
 loadState();
@@ -1261,18 +1270,21 @@ document.getElementById('clearBtn').addEventListener('click', () => {
 const PLAN_T = {
   en: { title:"🗓️ Weekly plan", intro:"Build a full week's plan in one go — varied and based on your filters.",
     launch:"Weekly plan", launchHint:"— build a full week's plan in one go", days:"Meals",
+    kcalDay:"kcal/day", kcalPh:"e.g. 500", onTarget:"on target", target:"Target",
     generate:"Generate plan", regenerate:"Regenerate", total:"Plan total",
     addAll:"Add all to grocery list", copyPlan:"Copy plan", swap:"Swap", cook:"Cook",
     empty:"Tap Generate to build your plan.", noRecipes:"No recipes match your filters — loosen them and try again.",
     copyHeader:"Weekly plan — Macro Kitchen" },
   nl: { title:"🗓️ Weekplan", intro:"Stel in één keer een compleet weekplan samen — gevarieerd en op basis van je filters.",
     launch:"Weekplan", launchHint:"— stel in één keer een compleet weekplan samen", days:"Maaltijden",
+    kcalDay:"kcal/dag", kcalPh:"bijv. 500", onTarget:"op doel", target:"Doel",
     generate:"Genereer plan", regenerate:"Opnieuw", total:"Totaal plan",
     addAll:"Alles op boodschappenlijst", copyPlan:"Kopieer plan", swap:"Vervang", cook:"Koken",
     empty:"Tik op Genereer om je weekplan te maken.", noRecipes:"Geen recepten passen bij je filters — zet ze losser en probeer opnieuw.",
     copyHeader:"Weekplan — Macro Kitchen" },
   de: { title:"🗓️ Wochenplan", intro:"Stelle in einem Schritt einen kompletten Plan zusammen — abwechslungsreich und nach deinen Filtern.",
     launch:"Wochenplan", launchHint:"— in einem Schritt einen kompletten Plan zusammenstellen", days:"Mahlzeiten",
+    kcalDay:"kcal/Tag", kcalPh:"z.B. 500", onTarget:"im Ziel", target:"Ziel",
     generate:"Plan erstellen", regenerate:"Neu erstellen", total:"Plan gesamt",
     addAll:"Alles zur Einkaufsliste", copyPlan:"Plan kopieren", swap:"Tauschen", cook:"Kochen",
     empty:"Tippe auf Erstellen für deinen Plan.", noRecipes:"Keine Rezepte passen zu deinen Filtern — lockere sie und versuche es erneut.",
@@ -1290,14 +1302,23 @@ function planPool() {
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
 function generateMealPlan() {
-  const pool = shuffle(planPool());
+  let pool = shuffle(planPool());
+  // With a kcal/day target, keep the meals closest to it (then pick with variety).
+  if (mpKcal > 0) {
+    pool.sort((a, b) => Math.abs(RECIPES[a].kcal - mpKcal) - Math.abs(RECIPES[b].kcal - mpKcal));
+    pool = pool.slice(0, Math.max(mpDays, Math.ceil(mpDays * 2.5)));
+    shuffle(pool);
+  }
   // Favour variety: one of each diet+macro combo first, then fill the rest.
   const seen = {}, varied = [], rest = [];
   for (const id of pool) {
     const key = RECIPES[id].diet + RECIPES[id].macro;
     if (!seen[key]) { seen[key] = 1; varied.push(id); } else rest.push(id);
   }
-  mealPlan = varied.concat(rest).slice(0, Math.min(mpDays, pool.length));
+  let chosen = varied.concat(rest).slice(0, Math.min(mpDays, pool.length));
+  // Put the closest-to-target meals in day order for a tidy plan.
+  if (mpKcal > 0) chosen.sort((a, b) => Math.abs(RECIPES[a].kcal - mpKcal) - Math.abs(RECIPES[b].kcal - mpKcal));
+  mealPlan = chosen;
   saveState();
   renderMealPlan();
 }
@@ -1323,6 +1344,11 @@ function renderMealPlan() {
       <span class="serv-count">${mpDays}</span>
       <button class="serv-btn" id="mpInc" ${mpDays >= 7 ? 'disabled' : ''} aria-label="+">+</button>
     </div>
+    <div class="mp-kcal">
+      <span class="serv-label">${pt('kcalDay')}</span>
+      <input type="number" inputmode="numeric" min="0" step="50" id="mpKcalInput"
+        placeholder="${pt('kcalPh')}" value="${mpKcal || ''}">
+    </div>
     <button class="mp-gen" id="mpGen">${mealPlan.length ? pt('regenerate') : pt('generate')}</button>
   </div>`;
 
@@ -1335,11 +1361,18 @@ function renderMealPlan() {
   let tk = 0, tp = 0, tf = 0, tc = 0;
   html += mealPlan.map((id, i) => {
     const r = RECIPES[id]; tk += r.kcal; tp += r.p; tf += r.f; tc += r.c;
+    let badge = '';
+    if (mpKcal > 0) {
+      const diff = r.kcal - mpKcal;
+      badge = Math.abs(diff) <= mpKcal * 0.15
+        ? `<span class="kcal-badge ok">✓ ${pt('onTarget')}</span>`
+        : `<span class="kcal-badge off">${diff > 0 ? '+' : ''}${diff} kcal</span>`;
+    }
     return `<div class="mp-day">
       <div class="num"><b>${i + 1}</b></div>
       <div class="info">
         <h4>${locName(id)}</h4>
-        <div class="meta">${r.kcal} kcal · ${locTime(r)}</div>
+        <div class="meta">${r.kcal} kcal · ${locTime(r)} ${badge}</div>
         <div class="tags"><span class="tag diet">${dietLabel[r.diet]}</span><span class="tag macro">${macroLabel[r.macro]}</span></div>
       </div>
       <div class="acts">
@@ -1348,8 +1381,11 @@ function renderMealPlan() {
       </div>
     </div>`;
   }).join('');
+  const targetLine = mpKcal > 0
+    ? `<div>${pt('target')}<b>${mpKcal * mealPlan.length} kcal</b></div>` : '';
   html += `<div class="mp-total">
     <div>${pt('total')}<b>${tk} kcal</b></div>
+    ${targetLine}
     <div>${mw.p}<b>${tp}g</b></div>
     <div>${mw.f}<b>${tf}g</b></div>
     <div>${mw.c}<b>${tc}g</b></div>
@@ -1390,6 +1426,13 @@ mealPlanModal.addEventListener('click', e => {
     setTimeout(() => toast.classList.remove('show'), 1600);
     return;
   }
+});
+// Target kcal input — update state without re-rendering so focus stays put.
+mealPlanModal.addEventListener('input', e => {
+  if (e.target.id !== 'mpKcalInput') return;
+  const v = parseInt(e.target.value, 10);
+  mpKcal = v > 0 ? v : null;
+  saveState();
 });
 
 // ---- Language switching ------------------------------------------------
