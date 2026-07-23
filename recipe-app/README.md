@@ -1,6 +1,6 @@
 # 🍳 Macro Kitchen — Recipe Finder
 
-A tiny, self-contained recipe app with **100 fresh, wholesome recipes** balanced
+A tiny, self-contained recipe app with **150 fresh, wholesome recipes** balanced
 across every macro × diet category. Pick a **macro focus** and a **diet**, and it
 shows matching meals with ingredients, method, and per-serving nutrition.
 
