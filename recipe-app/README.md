@@ -6,6 +6,8 @@ shows matching meals with ingredients, method, and per-serving nutrition.
 
 ## Features
 
+- **Favourites:** tap the ♡ on any recipe to save it, then use the **❤️ Favourites** toggle to see just your saved recipes. Kept in `localStorage`.
+
 - **Three languages with a selector:** English, Dutch (Nederlands), and German
   (Deutsch). The EN/NL/DE switch in the top-right translates the whole interface
   *and* every recipe — names, ingredients, and steps — and your choice is

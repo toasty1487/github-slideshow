@@ -61,9 +61,18 @@
   .chip.active { background: var(--accent); color: #05210f; border-color: var(--accent); font-weight: 600; }
   .chip.active.blue { background: var(--accent-2); color: #04202b; border-color: var(--accent-2); }
 
-  .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; color: var(--muted); font-size: 0.9rem; }
+  .meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 16px; color: var(--muted); font-size: 0.9rem; }
+  .meta-actions { display: flex; align-items: center; gap: 12px; }
   .clear { background: none; border: none; color: var(--accent-2); cursor: pointer; font-size: 0.9rem; }
   .clear:hover { text-decoration: underline; }
+  .fav-toggle { background: none; border: 1px solid var(--line); color: var(--text); border-radius: 999px;
+    padding: 5px 12px; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; }
+  .fav-toggle .fav-c { background: var(--card-2); border-radius: 999px; padding: 0 7px; font-size: 0.78rem; }
+  .fav-toggle.active { border-color: #f87171; color: #f87171; }
+  .fav-heart { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; display: flex;
+    align-items: center; justify-content: center; background: rgba(0,0,0,0.28); border: none; border-radius: 50%;
+    font-size: 1.1rem; line-height: 1; cursor: pointer; z-index: 2; -webkit-tap-highlight-color: transparent; }
+  .fav-heart:active { transform: scale(1.25); }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
   .card {
@@ -73,9 +82,10 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    position: relative;
   }
   .card-top { padding: 18px 18px 0; }
-  .card h3 { margin: 0 0 4px; font-size: 1.15rem; }
+  .card h3 { margin: 0 0 4px; font-size: 1.15rem; padding-right: 42px; }
   .card .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 14px; }
   .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
   .tag { font-size: 0.72rem; padding: 3px 9px; border-radius: 999px; background: var(--card-2); color: var(--muted); border: 1px solid var(--line); }
@@ -424,7 +434,10 @@
 
   <div class="meta">
     <span id="count"></span>
-    <button class="clear" id="clearBtn" data-i18n="reset">Reset filters</button>
+    <div class="meta-actions">
+      <button class="fav-toggle" id="favToggle">❤️ <span id="favLabel">Favourites</span> <span class="fav-c" id="favCount">0</span></button>
+      <button class="clear" id="clearBtn" data-i18n="reset">Reset filters</button>
+    </div>
   </div>
 
   <div class="grid" id="grid"></div>
@@ -525,7 +538,7 @@ const I18N = {
     moreProtein:"More protein", moreFat:"More fat", moreCarbs:"More carbs",
     vegan:"Vegan", vegetarian:"Vegetarian", meat:"Meat",
     cookLaunch:"What can I make?", cookLaunchHint:"— pick ingredients you have and build a meal",
-    reset:"Reset filters", empty:"No recipes match yet — try loosening a filter.",
+    reset:"Reset filters", empty:"No recipes match yet — try loosening a filter.", favorites:"Favourites", noFavorites:"No favourites yet — tap the ♡ on a recipe to save it.",
     footer:"Macro Kitchen · a simple recipe finder · nutrition values are approximate per serving",
     groceryList:"Grocery list", copyList:"Copy list", clearAll:"Clear all", toast:"Copied to clipboard ✓",
     yourIngredients:"Your ingredients", tickHave:"Tick what you have at home", searchPh:"Search ingredients…",
@@ -556,7 +569,7 @@ const I18N = {
     moreProtein:"Meer eiwit", moreFat:"Meer vet", moreCarbs:"Meer koolhydraten",
     vegan:"Veganistisch", vegetarian:"Vegetarisch", meat:"Vlees",
     cookLaunch:"Wat kan ik maken?", cookLaunchHint:"— kies ingrediënten die je hebt en stel een maaltijd samen",
-    reset:"Filters wissen", empty:"Nog geen gerechten gevonden — probeer een filter losser te zetten.",
+    reset:"Filters wissen", empty:"Nog geen gerechten gevonden — probeer een filter losser te zetten.", favorites:"Favorieten", noFavorites:"Nog geen favorieten — tik op de ♡ bij een recept om op te slaan.",
     footer:"Macro Kitchen · een eenvoudige receptenzoeker · voedingswaarden zijn bij benadering per portie",
     groceryList:"Boodschappenlijst", copyList:"Lijst kopiëren", clearAll:"Alles wissen", toast:"Gekopieerd naar klembord ✓",
     yourIngredients:"Jouw ingrediënten", tickHave:"Vink aan wat je in huis hebt", searchPh:"Zoek ingrediënten…",
@@ -587,7 +600,7 @@ const I18N = {
     moreProtein:"Mehr Protein", moreFat:"Mehr Fett", moreCarbs:"Mehr Kohlenhydrate",
     vegan:"Vegan", vegetarian:"Vegetarisch", meat:"Fleisch",
     cookLaunch:"Was kann ich kochen?", cookLaunchHint:"— wähle vorhandene Zutaten und stelle ein Gericht zusammen",
-    reset:"Filter zurücksetzen", empty:"Noch keine Treffer — lockere einen Filter.",
+    reset:"Filter zurücksetzen", empty:"Noch keine Treffer — lockere einen Filter.", favorites:"Favoriten", noFavorites:"Noch keine Favoriten — tippe auf das ♡ bei einem Rezept.",
     footer:"Macro Kitchen · eine einfache Rezeptsuche · Nährwerte sind ungefähr pro Portion",
     groceryList:"Einkaufsliste", copyList:"Liste kopieren", clearAll:"Alles löschen", toast:"In die Zwischenablage kopiert ✓",
     yourIngredients:"Deine Zutaten", tickHave:"Hake ab, was du zu Hause hast", searchPh:"Zutaten suchen…",
@@ -628,6 +641,8 @@ let LANG  = 'en';   // 'en' | 'nl' | 'de'
 let macro = null;   // 'protein' | 'fat' | 'carb'
 let diet  = null;   // 'vegan' | 'vegetarian' | 'meat'
 let goal  = null;   // parsed goal object when the user describes what they want
+const favorites = new Set();  // recipe indices the user hearted
+let favOnly = false;          // show only favourites
 const selected = new Set();   // recipe indices added to the grocery list
 const checkedItems = new Set(); // ticked-off ingredient keys
 const pantry = new Set();      // core ingredient names the user has
@@ -647,6 +662,7 @@ function saveState() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       lang: LANG,
+      favorites: [...favorites],
       selected: [...selected],
       checked: [...checkedItems],
       pantry: [...pantry],
@@ -661,6 +677,7 @@ function loadState() {
     if (!raw) return;
     const s = JSON.parse(raw);
     if (['en', 'nl', 'de'].includes(s.lang)) LANG = s.lang;
+    (s.favorites || []).forEach(id => { if (RECIPES[id]) favorites.add(id); });
     (s.selected || []).forEach(id => { if (RECIPES[id]) selected.add(id); });
     (s.checked || []).forEach(k => checkedItems.add(k));
     (s.pantry || []).forEach(p => pantry.add(p));
@@ -754,11 +771,14 @@ function servingsStepper(id) {
 }
 
 function render() {
-  const list = RECIPES.filter(r => (!macro || r.macro === macro) && dietMatch(r));
+  const list = RECIPES.filter((r, i) => (!macro || r.macro === macro) && dietMatch(r) && (!favOnly || favorites.has(i)));
   if (goal) list.sort((a, b) => goalScore(b) - goalScore(a));
   grid.innerHTML = '';
   empty.style.display = list.length ? 'none' : 'block';
+  empty.textContent = favOnly ? t('noFavorites') : t('empty');
   countEl.textContent = plural(list.length, 'recipeWord');
+  const favCountEl = document.getElementById('favCount');
+  if (favCountEl) favCountEl.textContent = favorites.size;
 
   const macroLabel = t('macroTag');
   const dietLabel = t('dietTag');
@@ -771,6 +791,7 @@ function render() {
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
+      <button class="fav-heart" data-fav="${id}" aria-label="favourite">${favorites.has(id) ? '❤️' : '🤍'}</button>
       <div class="card-top">
         <h3>${locName(id)}</h3>
         <div class="sub">${plural(r.serves, 'servingWord')} · ${locTime(r)} · <span class="kcal">${r.kcal} kcal</span></div>
@@ -873,8 +894,32 @@ function toggleSelect(id) {
   renderGrocery();
 }
 
-function openDrawer() { drawer.classList.add('open'); overlay.classList.add('open'); renderGrocery(); }
-function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('open'); }
+// ---- Scroll lock (iOS Safari) ------------------------------------------
+// Pinning the body with position:fixed is the reliable way to stop the page
+// behind a pop-up from scrolling — and, crucially, to restore scrolling after
+// the pop-up closes. Reference-counted so nested overlays behave.
+let savedScrollY = 0, lockCount = 0;
+function lockScroll() {
+  if (lockCount++ > 0) return;
+  savedScrollY = window.scrollY || window.pageYOffset || 0;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${savedScrollY}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+}
+function unlockScroll() {
+  if (lockCount === 0 || --lockCount > 0) return;
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  window.scrollTo(0, savedScrollY);
+}
+
+function openDrawer() { if (drawer.classList.contains('open')) return; drawer.classList.add('open'); overlay.classList.add('open'); lockScroll(); renderGrocery(); }
+function closeDrawer() { if (!drawer.classList.contains('open')) return; drawer.classList.remove('open'); overlay.classList.remove('open'); unlockScroll(); }
 
 document.getElementById('cartFab').addEventListener('click', openDrawer);
 document.getElementById('drawerClose').addEventListener('click', closeDrawer);
@@ -897,6 +942,15 @@ function changeServings(id, delta) {
 
 // Add / remove + open cooking plan + adjust servings via card buttons
 grid.addEventListener('click', e => {
+  const fav = e.target.closest('[data-fav]');
+  if (fav) {
+    const id = Number(fav.dataset.fav);
+    if (favorites.has(id)) favorites.delete(id); else favorites.add(id);
+    saveState();
+    if (favOnly) render();                       // card leaves the favourites view
+    else { fav.textContent = favorites.has(id) ? '❤️' : '🤍'; document.getElementById('favCount').textContent = favorites.size; }
+    return;
+  }
   const dec = e.target.closest('[data-serv-dec]');
   if (dec) { changeServings(Number(dec.dataset.servDec), -1); return; }
   const inc = e.target.closest('[data-serv-inc]');
@@ -1050,8 +1104,8 @@ function renderCookResults() {
   }).join('');
 }
 
-function openCook() { cookModal.classList.add('open'); renderPantry(); renderCookResults(); }
-function closeCook() { cookModal.classList.remove('open'); }
+function openCook() { if (cookModal.classList.contains('open')) return; cookModal.classList.add('open'); lockScroll(); renderPantry(); renderCookResults(); }
+function closeCook() { if (!cookModal.classList.contains('open')) return; cookModal.classList.remove('open'); unlockScroll(); }
 
 document.getElementById('cookLaunch').addEventListener('click', openCook);
 document.getElementById('cookClose').addEventListener('click', closeCook);
@@ -1227,10 +1281,10 @@ let planId = null, planStep = 0;   // step 0 = mise en place, 1..N = steps, N+1 
 
 function openPlan(id) {
   planId = id; planStep = 0;
-  cookPlan.classList.add('open');
+  if (!cookPlan.classList.contains('open')) { cookPlan.classList.add('open'); lockScroll(); }
   renderPlan();
 }
-function closePlan() { cookPlan.classList.remove('open'); }
+function closePlan() { if (!cookPlan.classList.contains('open')) return; cookPlan.classList.remove('open'); unlockScroll(); }
 
 function renderPlan() {
   const r = RECIPES[planId];
@@ -1293,7 +1347,7 @@ planBody.addEventListener('click', e => {
     `${plural(getServings(planId), 'servingWord')} · ${locTime(RECIPES[planId])} · ${RECIPES[planId].kcal} kcal`;
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closePlan(); closeCook(); closeDrawer(); document.getElementById('mealPlanModal').classList.remove('open'); }
+  if (e.key === 'Escape') { closePlan(); closeCook(); closeDrawer(); closeMealPlan(); }
 });
 
 document.getElementById('macroOpts').addEventListener('click', e => {
@@ -1312,7 +1366,15 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   macro = null; diet = null;
   document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
   goal = null; goalInput.value = ''; goalBanner.classList.remove('show');
+  favOnly = false; document.getElementById('favToggle').classList.remove('active');
   render();
+});
+
+document.getElementById('favToggle').addEventListener('click', () => {
+  favOnly = !favOnly;
+  document.getElementById('favToggle').classList.toggle('active', favOnly);
+  render();
+  document.querySelector('.meta').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 // ---- Weekly plan (breakfast + lunch + dinner per day, in one go) --------
@@ -1689,8 +1751,8 @@ async function copyShoppingList() {
   setTimeout(() => toast.classList.remove('show'), 1600);
 }
 
-function openMealPlan() { mealPlanModal.classList.add('open'); renderMealPlan(); }
-function closeMealPlan() { mealPlanModal.classList.remove('open'); }
+function openMealPlan() { if (mealPlanModal.classList.contains('open')) return; mealPlanModal.classList.add('open'); lockScroll(); renderMealPlan(); }
+function closeMealPlan() { if (!mealPlanModal.classList.contains('open')) return; mealPlanModal.classList.remove('open'); unlockScroll(); }
 
 document.getElementById('mealPlanLaunch').addEventListener('click', openMealPlan);
 document.getElementById('mealPlanClose').addEventListener('click', closeMealPlan);
@@ -1746,6 +1808,7 @@ function applyLang(lang) {
   pantrySearch.value = '';
   document.getElementById('mealPlanLaunchText').textContent = pt('launch');
   document.getElementById('mealPlanLaunchHint').textContent = pt('launchHint');
+  document.getElementById('favLabel').textContent = t('favorites');
   if (goal) applyGoal(goal.text); else render();
   renderGrocery();
   if (cookModal.classList.contains('open')) { renderPantry(); renderCookResults(); }
